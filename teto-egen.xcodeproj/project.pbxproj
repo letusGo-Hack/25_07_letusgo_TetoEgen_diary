@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1B8071AB2E2B32E500D4F735 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1B8071AA2E2B32E500D4F735 /* SnapKit */; };
+		1B8071AD2E2B32E500D4F735 /* SnapKit-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = 1B8071AC2E2B32E500D4F735 /* SnapKit-Dynamic */; };
+		1B8071B02E2B32EE00D4F735 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 1B8071AF2E2B32EE00D4F735 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		1B806FF52E2B264D00D4F735 /* teto-egen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "teto-egen.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +42,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1B8071B02E2B32EE00D4F735 /* Kingfisher in Frameworks */,
+				1B8071AB2E2B32E500D4F735 /* SnapKit in Frameworks */,
+				1B8071AD2E2B32E500D4F735 /* SnapKit-Dynamic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +87,9 @@
 			);
 			name = "teto-egen";
 			packageProductDependencies = (
+				1B8071AA2E2B32E500D4F735 /* SnapKit */,
+				1B8071AC2E2B32E500D4F735 /* SnapKit-Dynamic */,
+				1B8071AF2E2B32EE00D4F735 /* Kingfisher */,
 			);
 			productName = "teto-egen";
 			productReference = 1B806FF52E2B264D00D4F735 /* teto-egen.app */;
@@ -107,6 +119,10 @@
 			);
 			mainGroup = 1B806FEC2E2B264D00D4F735;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1B8071A92E2B32E500D4F735 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				1B8071AE2E2B32EE00D4F735 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1B806FF62E2B264D00D4F735 /* Products */;
 			projectDirPath = "";
@@ -345,6 +361,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1B8071A92E2B32E500D4F735 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		1B8071AE2E2B32EE00D4F735 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1B8071AA2E2B32E500D4F735 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B8071A92E2B32E500D4F735 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		1B8071AC2E2B32E500D4F735 /* SnapKit-Dynamic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B8071A92E2B32E500D4F735 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = "SnapKit-Dynamic";
+		};
+		1B8071AF2E2B32EE00D4F735 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B8071AE2E2B32EE00D4F735 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1B806FED2E2B264D00D4F735 /* Project object */;
 }
