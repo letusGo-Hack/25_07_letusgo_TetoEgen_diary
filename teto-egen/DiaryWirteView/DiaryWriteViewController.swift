@@ -380,12 +380,13 @@ class DiaryWriteViewController: UIViewController {
             // 저장 버튼 바인딩
             submitBarButton.rx.tap
                 .subscribe(onNext: { [weak self] in
-                    guard let self = self, 
+                    guard let self = self,
                           let text = self.diaryTextView.text,
                           let title = self.titleTextField.text,
                           !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                    self.view.endEditing(true)
                     self.showLoading()
-                    self.viewModel.analyzeDiary(text: text, title: title, date: selectedDate)
+                    self.viewModel.analyzeDiary(text: text, title: title, date: self.selectedDate)
                 })
                 .disposed(by: disposeBag)
         }
