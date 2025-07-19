@@ -12,7 +12,7 @@ import FoundationModels
 class DiaryViewModel {
     let analysisResult = PublishSubject<DiaryScoreModel>()
     
-    func analyzeDiary(text: String) {
+    func analyzeDiary(text: String, title: String, date: Date) {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             

@@ -44,6 +44,13 @@ class DiaryWriteViewController: UIViewController {
         $0.clearButtonMode = .whileEditing
     }
     
+    private let titleLabel = UILabel().then {
+        $0.font = UIFont.boldSystemFont(ofSize: 18)
+        $0.textColor = .black
+        $0.numberOfLines = 0
+        $0.isHidden = true
+    }
+    
     private let diaryTextView = UITextView().then {
         $0.font = UIFont.systemFont(ofSize: 16)
         $0.textColor = .darkGray
@@ -55,18 +62,18 @@ class DiaryWriteViewController: UIViewController {
         $0.isScrollEnabled = true
     }
     
+    private let contentsLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 16)
+        $0.textColor = .darkGray
+        $0.numberOfLines = 0
+        $0.isHidden = true
+    }
+    
     private let characterCountLabel = UILabel().then {
         $0.text = "0 / 200"
         $0.font = UIFont.systemFont(ofSize: 14)
         $0.textColor = .gray
         $0.textAlignment = .right
-    }
-    
-    private let analysisLabel = UILabel().then {
-        $0.font = UIFont.systemFont(ofSize: 18)
-        $0.textColor = .black
-        $0.numberOfLines = 0
-        $0.textAlignment = .center
     }
     
     // 테토력 차트 컨테이너
@@ -157,6 +164,23 @@ class DiaryWriteViewController: UIViewController {
         bindRx()
     }
     
+    // 기존 일기를 읽기 모드로 설정하는 메서드
+    func setupWithExistingDiary(_ diary: DiaryModel) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // 날짜 설정
+            self.selectedDate = diary.date
+            self.datePicker.date = diary.date
+            
+            // 제목과 내용 설정 후 읽기 모드로 전환
+            self.switchToReadOnlyMode(title: diary.title, contents: diary.contents)
+            
+            // 분석 결과 표시
+            self.updateChartWithAnalysis(diary.score)
+        }
+    }
+    
     private func setupUI() {
         // 네비게이션 바 설정
         setupNavigationBar()
@@ -182,6 +206,12 @@ class DiaryWriteViewController: UIViewController {
             make.height.equalTo(44)
         }
         
+        view.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(datePicker.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
         view.addSubview(diaryTextView)
         diaryTextView.snp.makeConstraints { make in
             make.top.equalTo(titleTextField.snp.bottom).offset(16)
@@ -189,16 +219,16 @@ class DiaryWriteViewController: UIViewController {
             make.height.equalTo(200)
         }
         
+        view.addSubview(contentsLabel)
+        contentsLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(16)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
         view.addSubview(characterCountLabel)
         characterCountLabel.snp.makeConstraints { make in
             make.top.equalTo(diaryTextView.snp.bottom).offset(5)
             make.right.equalToSuperview().inset(20)
-        }
-        
-        view.addSubview(analysisLabel)
-        analysisLabel.snp.makeConstraints { make in
-            make.top.equalTo(characterCountLabel.snp.bottom).offset(20)
-            make.left.right.equalToSuperview().inset(20)
         }
         
         setupChartContainers()
@@ -218,7 +248,7 @@ class DiaryWriteViewController: UIViewController {
         // 테토력 차트 설정
         view.addSubview(tetoChartContainer)
         tetoChartContainer.snp.makeConstraints { make in
-            make.top.equalTo(analysisLabel.snp.bottom).offset(20)
+            make.top.equalTo(characterCountLabel.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(20)
         }
         
@@ -282,9 +312,9 @@ class DiaryWriteViewController: UIViewController {
         // 네비게이션 바 타이틀 설정
         self.title = "일기 작성"
         
-        // 네비게이션 바 우측에 작성 버튼 추가
+        // 네비게이션 바 우측에 저장 버튼 추가
         let submitBarButton = UIBarButtonItem(
-            title: "작성",
+            title: "저장",
             style: .prominent,
             target: nil,
             action: nil
@@ -300,7 +330,7 @@ class DiaryWriteViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
-        // 네비게이션 바 작성 버튼 탭 이벤트 바인딩
+        // 네비게이션 바 저장 버튼 탭 이벤트 바인딩
         guard let submitBarButton = navigationItem.rightBarButtonItem else { return }
         
         submitBarButton.rx.tap
@@ -310,7 +340,7 @@ class DiaryWriteViewController: UIViewController {
                       let title = self.titleTextField.text,
                       !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 self.showLoading()
-                self.viewModel.analyzeDiary(text: text)
+                self.viewModel.analyzeDiary(text: text, title: title, date: selectedDate)
             })
             .disposed(by: disposeBag)
         
@@ -319,6 +349,7 @@ class DiaryWriteViewController: UIViewController {
             .subscribe(onNext: { [weak self] analysis in
                 self?.hideLoading()
                 self?.updateChartWithAnalysis(analysis)
+                self?.saveDiary(analysis)
             })
             .disposed(by: disposeBag)
         
@@ -363,7 +394,6 @@ class DiaryWriteViewController: UIViewController {
     }
     
     private func showLoading() {
-        analysisLabel.text = ""
         tetoChartContainer.isHidden = true
         egenChartContainer.isHidden = true
         dimBackgroundView.isHidden = false
@@ -382,8 +412,6 @@ class DiaryWriteViewController: UIViewController {
     }
     
     private func updateChartWithAnalysis(_ analysisResult: DiaryScoreModel) {
-        analysisLabel.text = "분석 완료!"
-        
         // 테토력 차트 업데이트
         tetoScoreLabel.text = String(format: "%.2f", analysisResult.tetoScore * 100)
         tetoProgressBar.setProgress(Float(analysisResult.tetoScore), animated: true)
@@ -395,5 +423,66 @@ class DiaryWriteViewController: UIViewController {
         egenProgressBar.setProgress(Float(analysisResult.egenScore), animated: true)
         egenDescriptionLabel.text = analysisResult.egenDescription
         egenChartContainer.isHidden = false
+    }
+    
+    private func saveDiary(_ analysisResult: DiaryScoreModel) {
+        guard let title = titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !title.isEmpty,
+              let contents = diaryTextView.text,
+              !contents.isEmpty else {
+            return
+        }
+        
+        let diary = DiaryModel(
+            title: title,
+            contents: contents,
+            score: analysisResult,
+            image: nil,
+            date: selectedDate
+        )
+        
+        // UserDefaults에 저장
+        DiaryStorage.shared.saveDiary(diary)
+        
+        // UI를 읽기 전용으로 변경
+        switchToReadOnlyMode(title: title, contents: contents)
+        
+        // 저장 완료 알림
+        showSaveSuccessAlert()
+    }
+    
+    private func switchToReadOnlyMode(title: String, contents: String) {
+        // 입력 필드 숨기기
+        titleTextField.isHidden = true
+        diaryTextView.isHidden = true
+        characterCountLabel.isHidden = true
+        
+        // 읽기 전용 라벨 표시
+        titleLabel.text = title
+        titleLabel.isHidden = false
+        
+        contentsLabel.text = contents
+        contentsLabel.isHidden = false
+        
+        // 테토력 차트 제약조건 업데이트 (읽기 모드에서)
+        tetoChartContainer.snp.remakeConstraints { make in
+            make.top.equalTo(contentsLabel.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
+        navigationItem.rightBarButtonItem = nil
+    }
+    
+    private func showSaveSuccessAlert() {
+        let alert = UIAlertController(
+            title: "저장 완료",
+            message: "일기가 성공적으로 저장되었습니다.",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "확인", style: .default)
+        
+        alert.addAction(okAction)
+        present(alert, animated: true)
     }
 }
