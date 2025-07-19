@@ -169,9 +169,8 @@ extension HomeViewController: UITableViewDelegate {
     }
     
     private func openDiaryDetailViewController(diary: DiaryModel) {
-        let diaryWriteVC = DiaryWriteViewController()
-        // 기존 일기 데이터를 전달하여 읽기 모드로 표시
-        diaryWriteVC.setupWithExistingDiary(diary)
+        // 읽기 모드로 초기화하여 일기 상세 화면 생성
+        let diaryWriteVC = DiaryWriteViewController(readOnlyMode: true, diary: diary)
         navigationController?.pushViewController(diaryWriteVC, animated: true)
     }
 }
