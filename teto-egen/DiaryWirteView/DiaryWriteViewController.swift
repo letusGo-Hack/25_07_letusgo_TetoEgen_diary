@@ -15,11 +15,40 @@ import FoundationModels
 class DiaryWriteViewController: UIViewController {
     
     // UI 컴포넌트
+    private let dateButton = UIButton(type: .system).then {
+        $0.setTitle(DateFormatter.koreanDateFormatter.string(from: Date()), for: .normal)
+        $0.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        $0.setTitleColor(.blue, for: .normal)
+        $0.layer.borderWidth = 1
+        $0.layer.borderColor = UIColor.lightGray.cgColor
+        $0.layer.cornerRadius = 8
+        $0.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        $0.isHidden = true
+    }
+    
+    private let datePicker = UIDatePicker().then {
+        $0.datePickerMode = .date
+        $0.preferredDatePickerStyle = .compact
+        $0.maximumDate = Date()
+        $0.date = Date()
+    }
+    
+    private let titleTextField = UITextField().then {
+        $0.placeholder = "일기 제목을 입력하세요"
+        $0.font = UIFont.systemFont(ofSize: 16)
+        $0.borderStyle = .roundedRect
+        $0.backgroundColor = .white
+        $0.layer.borderWidth = 1
+        $0.layer.borderColor = UIColor.lightGray.cgColor
+        $0.layer.cornerRadius = 8
+        $0.clearButtonMode = .whileEditing
+    }
+    
     private let titleLabel = UILabel().then {
-        $0.text = "오늘의 일기 작성"
-        $0.font = UIFont.boldSystemFont(ofSize: 24)
+        $0.font = UIFont.boldSystemFont(ofSize: 18)
         $0.textColor = .black
-        $0.textAlignment = .center
+        $0.numberOfLines = 0
+        $0.isHidden = true
     }
     
     private let diaryTextView = UITextView().then {
@@ -33,31 +62,97 @@ class DiaryWriteViewController: UIViewController {
         $0.isScrollEnabled = true
     }
     
-    private let submitButton = UIButton(type: .system).then {
-        $0.setTitle("작성", for: .normal)
-        $0.backgroundColor = .blue
-        $0.setTitleColor(.white, for: .normal)
-        $0.layer.cornerRadius = 8
+    private let contentsLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 16)
+        $0.textColor = .darkGray
+        $0.numberOfLines = 0
+        $0.isHidden = true
     }
     
-    private let resultLabel = UILabel().then {
-        $0.text = "측정 결과: "
-        $0.font = UIFont.systemFont(ofSize: 18)
-        $0.textColor = .black
-        $0.numberOfLines = 0
-        $0.textAlignment = .center
+    private let characterCountLabel = UILabel().then {
+        $0.text = "0 / 200"
+        $0.font = UIFont.systemFont(ofSize: 14)
+        $0.textColor = .gray
+        $0.textAlignment = .right
     }
     
-    private let summaryLabel = UILabel().then {
-        $0.text = "요약: "
-        $0.font = UIFont.systemFont(ofSize: 18)
+    // 테토력 차트 컨테이너
+    private let tetoChartContainer = UIView().then {
+        $0.isHidden = true
+    }
+    
+    private let tetoLabel = UILabel().then {
+        $0.text = "테토력"
+        $0.font = UIFont.boldSystemFont(ofSize: 16)
         $0.textColor = .black
+    }
+    
+    private let tetoScoreLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 14)
+        $0.textColor = .gray
+        $0.textAlignment = .right
+    }
+    
+    private let tetoProgressBar = UIProgressView(progressViewStyle: .default).then {
+        $0.progressTintColor = UIColor.systemBlue
+        $0.trackTintColor = UIColor.lightGray
+        $0.layer.cornerRadius = 4
+        $0.clipsToBounds = true
+        $0.transform = CGAffineTransform(scaleX: 1.0, y: 2.0)
+    }
+    
+    private let tetoDescriptionLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 12)
+        $0.textColor = .darkGray
         $0.numberOfLines = 0
-        $0.textAlignment = .center
+    }
+    
+    // 에겐력 차트 컨테이너
+    private let egenChartContainer = UIView().then {
+        $0.isHidden = true
+    }
+    
+    private let egenLabel = UILabel().then {
+        $0.text = "에겐력"
+        $0.font = UIFont.boldSystemFont(ofSize: 16)
+        $0.textColor = .black
+    }
+    
+    private let egenScoreLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 14)
+        $0.textColor = .gray
+        $0.textAlignment = .right
+    }
+    
+    private let egenProgressBar = UIProgressView(progressViewStyle: .default).then {
+        $0.progressTintColor = UIColor.systemPink
+        $0.trackTintColor = UIColor.lightGray
+        $0.layer.cornerRadius = 4
+        $0.clipsToBounds = true
+        $0.transform = CGAffineTransform(scaleX: 1.0, y: 2.0)
+    }
+    
+    private let egenDescriptionLabel = UILabel().then {
+        $0.font = UIFont.systemFont(ofSize: 12)
+        $0.textColor = .darkGray
+        $0.numberOfLines = 0
+    }
+    
+    private let loadingIndicator = UIActivityIndicatorView(style: .large).then {
+        $0.color = .white
+        $0.hidesWhenStopped = true
+    }
+    
+    private let dimBackgroundView = UIView().then {
+        $0.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        $0.isHidden = true
     }
     
     // RxSwift DisposeBag
     private let disposeBag = DisposeBag()
+    
+    // 선택된 날짜
+    private var selectedDate = Date()
     
     // ViewModel (간단한 예시로, 실제 AI 분석 로직은 별도 구현 필요)
     private let viewModel = DiaryViewModel()
@@ -69,128 +164,325 @@ class DiaryWriteViewController: UIViewController {
         bindRx()
     }
     
+    // 기존 일기를 읽기 모드로 설정하는 메서드
+    func setupWithExistingDiary(_ diary: DiaryModel) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // 날짜 설정
+            self.selectedDate = diary.date
+            self.datePicker.date = diary.date
+            
+            // 제목과 내용 설정 후 읽기 모드로 전환
+            self.switchToReadOnlyMode(title: diary.title, contents: diary.contents)
+            
+            // 분석 결과 표시
+            self.updateChartWithAnalysis(diary.score)
+        }
+    }
+    
     private func setupUI() {
+        // 네비게이션 바 설정
+        setupNavigationBar()
+        
         // SnapKit을 사용한 레이아웃 설정
+        view.addSubview(dateButton)
+        dateButton.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.centerX.equalToSuperview()
+            make.height.equalTo(36)
+        }
+        
+        view.addSubview(datePicker)
+        datePicker.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.centerX.equalToSuperview()
+        }
+        
+        view.addSubview(titleTextField)
+        titleTextField.snp.makeConstraints { make in
+            make.top.equalTo(datePicker.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(44)
+        }
+        
         view.addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.top.equalTo(datePicker.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(20)
         }
         
         view.addSubview(diaryTextView)
         diaryTextView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(20)
+            make.top.equalTo(titleTextField.snp.bottom).offset(16)
             make.left.right.equalToSuperview().inset(20)
             make.height.equalTo(200)
         }
         
-        view.addSubview(submitButton)
-        submitButton.snp.makeConstraints { make in
-            make.top.equalTo(diaryTextView.snp.bottom).offset(20)
-            make.centerX.equalToSuperview()
-            make.width.equalTo(200)
-            make.height.equalTo(50)
-        }
-        
-        view.addSubview(resultLabel)
-        resultLabel.snp.makeConstraints { make in
-            make.top.equalTo(submitButton.snp.bottom).offset(20)
+        view.addSubview(contentsLabel)
+        contentsLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(16)
             make.left.right.equalToSuperview().inset(20)
         }
         
-        view.addSubview(summaryLabel)
-        summaryLabel.snp.makeConstraints { make in
-            make.top.equalTo(resultLabel.snp.bottom).offset(20)
+        view.addSubview(characterCountLabel)
+        characterCountLabel.snp.makeConstraints { make in
+            make.top.equalTo(diaryTextView.snp.bottom).offset(5)
+            make.right.equalToSuperview().inset(20)
+        }
+        
+        setupChartContainers()
+        
+        view.addSubview(dimBackgroundView)
+        dimBackgroundView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        dimBackgroundView.addSubview(loadingIndicator)
+        loadingIndicator.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+    }
+    
+    private func setupChartContainers() {
+        // 테토력 차트 설정
+        view.addSubview(tetoChartContainer)
+        tetoChartContainer.snp.makeConstraints { make in
+            make.top.equalTo(characterCountLabel.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(20)
         }
+        
+        tetoChartContainer.addSubview(tetoLabel)
+        tetoLabel.snp.makeConstraints { make in
+            make.top.left.equalToSuperview()
+        }
+        
+        tetoChartContainer.addSubview(tetoScoreLabel)
+        tetoScoreLabel.snp.makeConstraints { make in
+            make.top.right.equalToSuperview()
+            make.left.greaterThanOrEqualTo(tetoLabel.snp.right).offset(8)
+        }
+        
+        tetoChartContainer.addSubview(tetoProgressBar)
+        tetoProgressBar.snp.makeConstraints { make in
+            make.top.equalTo(tetoLabel.snp.bottom).offset(8)
+            make.left.right.equalToSuperview()
+            make.height.equalTo(8)
+        }
+        
+        tetoChartContainer.addSubview(tetoDescriptionLabel)
+        tetoDescriptionLabel.snp.makeConstraints { make in
+            make.top.equalTo(tetoProgressBar.snp.bottom).offset(8)
+            make.left.right.bottom.equalToSuperview()
+        }
+        
+        // 에겐력 차트 설정
+        view.addSubview(egenChartContainer)
+        egenChartContainer.snp.makeConstraints { make in
+            make.top.equalTo(tetoChartContainer.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
+        egenChartContainer.addSubview(egenLabel)
+        egenLabel.snp.makeConstraints { make in
+            make.top.left.equalToSuperview()
+        }
+        
+        egenChartContainer.addSubview(egenScoreLabel)
+        egenScoreLabel.snp.makeConstraints { make in
+            make.top.right.equalToSuperview()
+            make.left.greaterThanOrEqualTo(egenLabel.snp.right).offset(8)
+        }
+        
+        egenChartContainer.addSubview(egenProgressBar)
+        egenProgressBar.snp.makeConstraints { make in
+            make.top.equalTo(egenLabel.snp.bottom).offset(8)
+            make.left.right.equalToSuperview()
+            make.height.equalTo(8)
+        }
+        
+        egenChartContainer.addSubview(egenDescriptionLabel)
+        egenDescriptionLabel.snp.makeConstraints { make in
+            make.top.equalTo(egenProgressBar.snp.bottom).offset(8)
+            make.left.right.bottom.equalToSuperview()
+        }
+    }
+    
+    private func setupNavigationBar() {
+        // 네비게이션 바 타이틀 설정
+        self.title = "일기 작성"
+        
+        // 네비게이션 바 우측에 저장 버튼 추가
+        let submitBarButton = UIBarButtonItem(
+            title: "저장",
+            style: .prominent,
+            target: nil,
+            action: nil
+        )
+        navigationItem.rightBarButtonItem = submitBarButton
     }
     
     private func bindRx() {
-        // 제출 버튼 탭 이벤트 바인딩
-        submitButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                guard let self = self, let text = self.diaryTextView.text else { return }
-                self.viewModel.analyzeDiary(text: text)
-                self.viewModel.summarizeDiary(text: text)
+        // 날짜 피커 값 변경 이벤트
+        datePicker.rx.date
+            .subscribe(onNext: { [weak self] date in
+                self?.selectedDate = date
             })
             .disposed(by: disposeBag)
         
-        // ViewModel의 결과 Observable 바인딩
+        // 네비게이션 바 저장 버튼 탭 이벤트 바인딩
+        guard let submitBarButton = navigationItem.rightBarButtonItem else { return }
+        
+        submitBarButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let self = self, 
+                      let text = self.diaryTextView.text,
+                      let title = self.titleTextField.text,
+                      !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                self.showLoading()
+                self.viewModel.analyzeDiary(text: text, title: title, date: selectedDate)
+            })
+            .disposed(by: disposeBag)
+        
         viewModel.analysisResult
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] result in
-                self?.resultLabel.text = "측정 결과: 테토력 \(result.teto)% / 에겐력 \(result.egen)%"
+            .subscribe(onNext: { [weak self] analysis in
+                self?.hideLoading()
+                self?.updateChartWithAnalysis(analysis)
+                self?.saveDiary(analysis)
             })
             .disposed(by: disposeBag)
         
-        viewModel.summaryResult
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] summary in
-                self?.summaryLabel.text = "요약: \(summary)"
-            })
-            .disposed(by: disposeBag)
-        
-        // 텍스트뷰 변화 감지 (예: 글자 수 제한 등 추가 가능)
+        // 텍스트뷰 변화 감지 및 글자 수 제한 (100자)
         diaryTextView.rx.text
             .orEmpty
-            .map { $0.count > 0 }
-            .bind(to: submitButton.rx.isEnabled)
+            .subscribe(onNext: { [weak self] text in
+                guard let self = self else { return }
+                
+                // 100자 초과 시 자르기
+                if text.count > 200 {
+                    let index = text.index(text.startIndex, offsetBy: 200)
+                    let trimmedText = String(text[..<index])
+                    self.diaryTextView.text = trimmedText
+                    self.characterCountLabel.text = "200 / 200"
+                } else {
+                    // 글자 수 표시 업데이트
+                    self.characterCountLabel.text = "\(text.count) / 200"
+                }
+                
+                // 글자 수에 따른 색상 변경 (90자 이상이면 빨간색)
+                if text.count >= 90 {
+                    self.characterCountLabel.textColor = .red
+                } else {
+                    self.characterCountLabel.textColor = .gray
+                }
+            })
             .disposed(by: disposeBag)
-    }
-}
-
-// ViewModel 클래스 (예시: 실제 AI 분석은 NLP 라이브러리나 API 연동 필요)
-class DiaryViewModel {
-    let analysisResult = PublishSubject<(teto: Int, egen: Int)>()
-    let summaryResult = PublishSubject<String>()
-    
-    func analyzeDiary(text: String) {
-        // 간단한 모의 분석 로직 (실제로는 AI 모델 사용)
-        let teto = Int.random(in: 0...100)  // 테토력 모의
-        let egen = 100 - teto  // 에겐력 모의 (합 100으로 가정)
-        analysisResult.onNext((teto: teto, egen: egen))
-    }
-    
-    func summarizeDiary(text: String) {
-        Task.detached(priority: .userInitiated) { [weak self] in
-            guard let self else { return }
-            
-            do {
-                // 1) 세션 준비(지속적인 대화가 아니라면 매번 새로 만들어도 무방)
-                let systemPrompt = """
-                       당신은 개인 일기를 친근한 한국어로 간결하게 요약해 주는 비서입니다.
-                       · 핵심 사건과 감정만 뽑아 3문장 이하로 정리하세요.
-                       · “오늘은 …했다.” 같은 1인칭 현재·과거형 표현을 사용하세요.
-                       """
-                let session = LanguageModelSession(instructions: systemPrompt)
-                
-                // 2) 토큰 샘플링 옵션 설정
-                let options = GenerationOptions(
-                    temperature: 0.3,          // 안정적인 요약을 위해 낮은 값
-                    maximumResponseTokens: 64 // 128토큰이면 한글 300자 내외
-                )
-                
-                // 3) 프롬프트 생성 & 응답 요청
-                let userPrompt = """
-                       아래 일기를 요약해 줘:\n\"\"\"\n\(text)\n\"\"\"
-                       """
-                let summary = try await session.respond(
-                    to: userPrompt,
-                    options: options
-                )
-                let summaryText = summary.content
-                
-                // 4) 결과 전달 (메인 스레드 보장)
-                await MainActor.run {
-                    self.summaryResult.onNext(summaryText)
-                }
-            } catch {
-                // FoundationModels.GenerationError 등 모든 오류를 문자열로 전달
-                await MainActor.run {
-                    self.summaryResult.onNext("요약 실패: \(error.localizedDescription)")
-                }
-            }
+        
+        // 네비게이션 바 버튼 활성화 조건
+        Observable.combineLatest(
+            titleTextField.rx.text.orEmpty.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
+            diaryTextView.rx.text.orEmpty.map { $0.count > 0 }
+        )
+        .map { titleHasText, contentHasText in
+            return titleHasText && contentHasText
         }
+        .subscribe(onNext: { [weak self] isValid in
+            self?.navigationItem.rightBarButtonItem?.isEnabled = isValid
+        })
+        .disposed(by: disposeBag)
+    }
+    
+    private func showLoading() {
+        tetoChartContainer.isHidden = true
+        egenChartContainer.isHidden = true
+        dimBackgroundView.isHidden = false
+        loadingIndicator.startAnimating()
+        navigationItem.rightBarButtonItem?.isEnabled = false
+    }
+    
+    private func hideLoading() {
+        dimBackgroundView.isHidden = true
+        loadingIndicator.stopAnimating()
+        
+        // 제목과 내용이 모두 있을 때만 버튼 활성화
+        let titleHasText = !(titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        let contentHasText = !diaryTextView.text.isEmpty
+        navigationItem.rightBarButtonItem?.isEnabled = titleHasText && contentHasText
+    }
+    
+    private func updateChartWithAnalysis(_ analysisResult: DiaryScoreModel) {
+        // 테토력 차트 업데이트
+        tetoScoreLabel.text = String(format: "%.2f", analysisResult.tetoScore * 100)
+        tetoProgressBar.setProgress(Float(analysisResult.tetoScore), animated: true)
+        tetoDescriptionLabel.text = analysisResult.tetoDescription
+        tetoChartContainer.isHidden = false
+        
+        // 에겐력 차트 업데이트
+        egenScoreLabel.text = String(format: "%.2f", analysisResult.egenScore * 100)
+        egenProgressBar.setProgress(Float(analysisResult.egenScore), animated: true)
+        egenDescriptionLabel.text = analysisResult.egenDescription
+        egenChartContainer.isHidden = false
+    }
+    
+    private func saveDiary(_ analysisResult: DiaryScoreModel) {
+        guard let title = titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !title.isEmpty,
+              let contents = diaryTextView.text,
+              !contents.isEmpty else {
+            return
+        }
+        
+        let diary = DiaryModel(
+            title: title,
+            contents: contents,
+            score: analysisResult,
+            image: nil,
+            date: selectedDate
+        )
+        
+        // UserDefaults에 저장
+        DiaryStorage.shared.saveDiary(diary)
+        
+        // UI를 읽기 전용으로 변경
+        switchToReadOnlyMode(title: title, contents: contents)
+        
+        // 저장 완료 알림
+        showSaveSuccessAlert()
+    }
+    
+    private func switchToReadOnlyMode(title: String, contents: String) {
+        // 입력 필드 숨기기
+        titleTextField.isHidden = true
+        diaryTextView.isHidden = true
+        characterCountLabel.isHidden = true
+        
+        // 읽기 전용 라벨 표시
+        titleLabel.text = title
+        titleLabel.isHidden = false
+        
+        contentsLabel.text = contents
+        contentsLabel.isHidden = false
+        
+        // 테토력 차트 제약조건 업데이트 (읽기 모드에서)
+        tetoChartContainer.snp.remakeConstraints { make in
+            make.top.equalTo(contentsLabel.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
+        navigationItem.rightBarButtonItem = nil
+    }
+    
+    private func showSaveSuccessAlert() {
+        let alert = UIAlertController(
+            title: "저장 완료",
+            message: "일기가 성공적으로 저장되었습니다.",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "확인", style: .default)
+        
+        alert.addAction(okAction)
+        present(alert, animated: true)
     }
 }
-
