@@ -17,7 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         let diaryWriteViewController = DiaryWriteViewController()
-        window?.rootViewController = diaryWriteViewController
+        let navigationController: UINavigationController = .init(rootViewController: diaryWriteViewController)
+        window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
     }
 
