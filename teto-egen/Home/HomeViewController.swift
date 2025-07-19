@@ -2,12 +2,17 @@ import UIKit
 import RxSwift
 import RxCocoa
 
+// Use same displayFormatter as in HomeViewModel
+// (DateFormatter.displayFormatter is defined as static in HomeViewModel)
+
 final class HomeViewController: UIViewController {
     // MARK: - Properties
     private var viewModel = HomeViewModel()
     private let homeView = HomeView()
     private let disposeBag = DisposeBag()
-    private var currentDiaryItems: [HomeViewModel.DiaryItem] = []
+    private var currentDiaryItems: [Int: [HomeViewModel.DiaryItem]] = [:] // 월별
+    private var currentSectionMonths: [Int] = [] // 정렬된 월
+    private var currentGridColors: [[ColorType]] = []
 
     // MARK: - Lifecycle
     override func loadView() {
@@ -44,6 +49,7 @@ final class HomeViewController: UIViewController {
         homeView.diaryTableView.delegate = self
     }
 
+    // MARK: - Bindings
     private func bindActions() {
         homeView.addButton.rx.tap
             .bind { [weak self] in
@@ -54,30 +60,7 @@ final class HomeViewController: UIViewController {
         
         homeView.yearDropdown.rx.tap
             .bind { [weak self] in
-                guard let self = self else { return }
-                let alert = UIAlertController(title: "연도 선택", message: nil, preferredStyle: .actionSheet)
-                
-                let calendar = Calendar.current
-                let currentYear = calendar.component(.year, from: Date())
-                let years = (currentYear-5...currentYear).reversed()
-                
-                for year in years {
-                    alert.addAction(UIAlertAction(title: "\(year)년", style: .default, handler: { _ in
-                        self.viewModel = HomeViewModel(year: year)
-                        self.homeView.gridCollectionView.reloadData()
-                        self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
-                    }))
-                }
-                
-                alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-                
-                // For iPad support
-                if let popover = alert.popoverPresentationController {
-                    popover.sourceView = self.homeView.yearDropdown
-                    popover.sourceRect = self.homeView.yearDropdown.bounds
-                }
-                
-                self.present(alert, animated: true)
+                self?.showYearSelectionAlert()
             }
             .disposed(by: disposeBag)
     }
@@ -88,15 +71,59 @@ final class HomeViewController: UIViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] items in
                 guard let self = self else { return }
-                self.currentDiaryItems = items
+                self.currentDiaryItems = Dictionary(grouping: items) { item in
+                    guard let date = DateFormatter.displayFormatter.date(from: item.date) else { return 0 } // fallback month 0 if parse fails
+                    return Calendar.current.component(.month, from: date)
+                }
+                self.currentSectionMonths = self.currentDiaryItems.keys.sorted()
                 self.homeView.diaryTableView.reloadData()
             })
             .disposed(by: disposeBag)
+        
+        viewModel.gridColors
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] gridColors in
+                self?.currentGridColors = gridColors
+                self?.homeView.gridCollectionView.reloadData()
+            })
+            .disposed(by: disposeBag)
     }
-    
+
+    // MARK: - Navigation
     private func openDiaryWriteViewController() {
         let diaryWriteVC = DiaryWriteViewController()
         navigationController?.pushViewController(diaryWriteVC, animated: true)
+    }
+
+    // MARK: - Detail
+    private func openDiaryDetailViewController(diary: DiaryModel) {
+        let diaryWriteVC = DiaryWriteViewController(readOnlyMode: true, diary: diary)
+        navigationController?.pushViewController(diaryWriteVC, animated: true)
+    }
+
+    // MARK: - Year Selection
+    private func showYearSelectionAlert() {
+        let alert = UIAlertController(title: "연도 선택", message: nil, preferredStyle: .actionSheet)
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let years = (currentYear-5...currentYear).reversed()
+        for year in years {
+            alert.addAction(UIAlertAction(title: "\(year)년", style: .default, handler: { [weak self] _ in
+                self?.reloadForSelectedYear(year)
+            }))
+        }
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.homeView.yearDropdown
+            popover.sourceRect = self.homeView.yearDropdown.bounds
+        }
+        self.present(alert, animated: true)
+    }
+
+    private func reloadForSelectedYear(_ year: Int) {
+        self.viewModel = HomeViewModel(year: year)
+        self.homeView.gridCollectionView.reloadData()
+        self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
     }
 }
 
@@ -107,7 +134,7 @@ extension HomeViewController: UICollectionViewDataSource {
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        viewModel.gridColors.count * 7 // 전체 주차 수 * 7
+        currentGridColors.count * 7 // 전체 주차 수 * 7
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -116,7 +143,7 @@ extension HomeViewController: UICollectionViewDataSource {
         }
         let week = indexPath.item / 7
         let weekday = indexPath.item % 7
-        let type = viewModel.gridColors[week][weekday]
+        let type = currentGridColors[week][weekday]
         cell.configure(type: type)
         return cell
     }
@@ -144,15 +171,22 @@ extension HomeViewController: UICollectionViewDelegateFlowLayout {
 
 // MARK: - UITableViewDataSource
 extension HomeViewController: UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        currentSectionMonths.count
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        currentDiaryItems.count
+        let month = currentSectionMonths[section]
+        return currentDiaryItems[month]?.count ?? 0
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "DiaryCell", for: indexPath) as? DiaryCell else {
             fatalError("Failed to dequeue DiaryCell")
         }
-        let item = currentDiaryItems[indexPath.row]
+        let month = currentSectionMonths[indexPath.section]
+        let items = currentDiaryItems[month] ?? []
+        let item = items[indexPath.row]
         cell.configure(date: item.date, title: item.title)
         return cell
     }
@@ -163,14 +197,14 @@ extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // 선택한 일기 상세보기로 이동
-        let selectedDiary = currentDiaryItems[indexPath.row].diary
+        let month = currentSectionMonths[indexPath.section]
+        let items = currentDiaryItems[month] ?? []
+        let selectedDiary = items[indexPath.row].diary
         openDiaryDetailViewController(diary: selectedDiary)
     }
     
-    private func openDiaryDetailViewController(diary: DiaryModel) {
-        // 읽기 모드로 초기화하여 일기 상세 화면 생성
-        let diaryWriteVC = DiaryWriteViewController(readOnlyMode: true, diary: diary)
-        navigationController?.pushViewController(diaryWriteVC, animated: true)
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let month = currentSectionMonths[section]
+        return "\(month)월"
     }
 }
