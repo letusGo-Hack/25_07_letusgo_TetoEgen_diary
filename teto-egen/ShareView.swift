@@ -11,12 +11,9 @@ import SnapKit
 
 class ShareView: UIView {
     
-    private let shareButton = UIButton(type: .system).then {
-        $0.setTitle("Share", for: .normal)
-        $0.setTitleColor(.white, for: .normal)
-        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        $0.layer.cornerRadius = 8
-        $0.backgroundColor = .systemBlue
+    private let exitButton = UIButton(type: .system).then {
+        $0.setImage(UIImage(systemName: "x.circle.fill"), for: .normal)
+        $0.tintColor = .white
     }
 
     private let dateTitleLabel = UILabel().then {
@@ -42,15 +39,16 @@ class ShareView: UIView {
     }
     
     private let characterImageView = UIImageView().then {
-        $0.image = UIImage(systemName: "moon")
+        $0.image = UIImage(named: "teto1")
+        $0.contentMode = .scaleAspectFit
     }
     
-    private let exitButton = UIButton(type: .system).then {
-        $0.setTitle("Close", for: .normal)
+    private let shareButton = UIButton(type: .system).then {
+        $0.setTitle("공유하기", for: .normal)
         $0.setTitleColor(.white, for: .normal)
         $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         $0.layer.cornerRadius = 8
-        $0.backgroundColor = .systemRed
+        $0.backgroundColor = .systemBlue
     }
     
     override init(frame: CGRect) {
@@ -63,7 +61,7 @@ class ShareView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .blue
+        backgroundColor = UIColor(cgColor: CGColor(red: 0.149, green: 0.182, blue: 0.202, alpha: 1))
         [
             exitButton,
             dateTitleLabel,
@@ -78,7 +76,7 @@ class ShareView: UIView {
         exitButton.snp.makeConstraints {
             $0.top.equalTo(safeAreaLayoutGuide.snp.top).inset(10)
             $0.trailing.equalTo(safeAreaLayoutGuide.snp.trailing).inset(10)
-            $0.size.equalTo(40)
+            $0.size.equalTo(50)
         }
         
         dateTitleLabel.snp.makeConstraints {
@@ -102,7 +100,8 @@ class ShareView: UIView {
         characterImageView.snp.makeConstraints {
             $0.top.equalTo(typeLabel.snp.bottom).offset(30)
             $0.centerX.equalToSuperview()
-            $0.size.equalTo(100)
+            $0.horizontalEdges.equalToSuperview().inset(20)
+            $0.height.equalTo(300)
         }
         
         shareButton.snp.makeConstraints {
