@@ -136,3 +136,10 @@ extension ShareView {
         return image
     }
 }
+
+extension ShareView {
+    
+    func updateDateTitleLabel(_ text: String) {
+        dateTitleLabel.text = text
+    }
+}
