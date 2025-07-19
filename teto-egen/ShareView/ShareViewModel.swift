@@ -33,7 +33,7 @@ class ShareViewModel {
         dateFormatter.locale = Locale.current
         dateFormatter.dateFormat = "MM월 dd일"
         let todayLabel = dateFormatter.string(from: date)
-        let nickName = UserDefaults.standard.string(forKey: "nickName") ?? "사용자"
+        let nickName = UserDefaults.standard.string(forKey: "nickname") ?? "사용자"
         dateTitleLabelRelay.accept("\(todayLabel)의 \(nickName)님은")
     }
 }

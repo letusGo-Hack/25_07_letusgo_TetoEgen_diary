@@ -31,6 +31,7 @@ final class HomeViewController: UIViewController {
         super.viewWillAppear(animated)
         // 화면이 나타날 때마다 일기 데이터 새로고침
         viewModel.loadDiaries()
+        showOnboarding()
     }
 
     // MARK: - Configuration
@@ -124,6 +125,15 @@ final class HomeViewController: UIViewController {
         self.viewModel = HomeViewModel(year: year)
         self.homeView.gridCollectionView.reloadData()
         self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
+    }
+    
+    private func showOnboarding() {
+        guard UserDefaults.standard.string(forKey: "nickname") == nil else {
+            return
+        }
+        let onboardingView: OnboardingViewController = .init()
+        onboardingView.modalPresentationStyle = .fullScreen
+        present(onboardingView, animated: true)
     }
 }
 
