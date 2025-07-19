@@ -38,13 +38,17 @@ class DiaryViewModel {
                 
                 // 2) 토큰 샘플링 옵션 설정
                 let options = GenerationOptions(
-                    temperature: 0.7,
+                    temperature: 1.1,
                     maximumResponseTokens: 300
                 )
                 
                 // 3) 프롬프트 생성 & 응답 요청
                 let userPrompt = """
-                       아래 일기에서 테토력, 에겐력을 측정해줘.:\n\"\"\"\n\(text)\n\"\"\"
+                       아래 일기의 내용을 분석하고, 분석한 내용을 토대로 테토력, 에겐력을 측정해줘
+                       
+                       <일기>
+                       \(text)
+                       </일기>
                        """
                 let analysis = try await session.respond(
                     to: userPrompt,

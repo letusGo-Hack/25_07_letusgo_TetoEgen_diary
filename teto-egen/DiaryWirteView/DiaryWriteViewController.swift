@@ -349,7 +349,7 @@ class DiaryWriteViewController: UIViewController {
     private func setupNavigationBar() {
         // 읽기 모드에 따른 네비게이션 바 설정
         if isReadOnlyMode {
-            self.title = "일기 보기"
+            self.title = "일기"
             // 읽기 모드에서는 저장 버튼 없음
             navigationItem.rightBarButtonItem = nil
         } else {
