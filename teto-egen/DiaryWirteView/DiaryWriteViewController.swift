@@ -399,6 +399,15 @@ class DiaryWriteViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
+        // 분석 실패 처리
+        viewModel.analysisError
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] errorMessage in
+                self?.hideLoading()
+                self?.showAnalysisFailureAlert(message: errorMessage)
+            })
+            .disposed(by: disposeBag)
+        
         // 읽기 모드가 아닐 때만 텍스트 입력 관련 바인딩
         if !isReadOnlyMode {
             // 텍스트뷰 변화 감지 및 글자 수 제한 (200자)
@@ -540,5 +549,28 @@ class DiaryWriteViewController: UIViewController {
         
         alert.addAction(okAction)
         present(alert, animated: true)
+    }
+    
+    private func showAnalysisFailureAlert(message: String) {
+        let alert = UIAlertController(
+            title: "분석 실패",
+            message: message,
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "다시 작성", style: .default) { [weak self] _ in
+            // 사용자가 다시 작성할 수 있도록 UI 상태 복원
+            self?.resetForRetry()
+        }
+        
+        alert.addAction(okAction)
+        present(alert, animated: true)
+    }
+    
+    private func resetForRetry() {
+        // 저장 버튼 다시 활성화 (제목과 내용이 있는 경우)
+        let titleHasText = !(titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        let contentHasText = !diaryTextView.text.isEmpty
+        navigationItem.rightBarButtonItem?.isEnabled = titleHasText && contentHasText
     }
 }

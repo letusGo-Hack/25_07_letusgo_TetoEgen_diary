@@ -11,6 +11,7 @@ import FoundationModels
 
 class DiaryViewModel {
     let analysisResult = PublishSubject<DiaryScoreModel>()
+    let analysisError = PublishSubject<String>()
     
     func analyzeDiary(text: String, title: String, date: Date) {
         Task.detached(priority: .userInitiated) { [weak self] in
@@ -19,7 +20,7 @@ class DiaryViewModel {
             do {
                 let systemPrompt = """
                 당신은 일기 감별사야.
-                다음 일기 내용을 분석해서 테토력과 에겐력을 측정해.
+                다음 일기 내용을 분석해서 테토력과 에겐력을 측정해. (테토력과 에겐력 측정값은 항상 달라야 돼.)
                 
                 <측정기준>
                 <테토력>
@@ -64,15 +65,9 @@ class DiaryViewModel {
                     self.analysisResult.onNext(result)
                 }
             } catch {
-                // FoundationModels.GenerationError 등 모든 오류를 문자열로 전달
+                // 분석 실패 시 에러 이벤트 전달
                 await MainActor.run {
-                    let errorResult = DiaryScoreModel(
-                        tetoScore: 0.0,
-                        tetoDescription: "분석 실패: \(error.localizedDescription)",
-                        egenScore: 0.0,
-                        egenDescription: "분석 실패: \(error.localizedDescription)"
-                    )
-                    self.analysisResult.onNext(errorResult)
+                    self.analysisError.onNext("AI 분석에 실패했습니다. 일기를 다시 작성해주세요. 표준어를 많이 사용할 수록 분석이 잘됩니다.")
                 }
             }
         }
