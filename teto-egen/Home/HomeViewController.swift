@@ -33,6 +33,7 @@ final class HomeViewController: UIViewController {
         super.viewWillAppear(animated)
         // 화면이 나타날 때마다 일기 데이터 새로고침
         viewModel.loadDiaries()
+        showOnboarding()
         updateTodayLabelAndScroll()
     }
 
@@ -139,6 +140,15 @@ final class HomeViewController: UIViewController {
         self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
     }
     
+    private func showOnboarding() {
+        guard UserDefaults.standard.string(forKey: "nickname") == nil else {
+            return
+        }
+        let onboardingView: OnboardingViewController = .init()
+        onboardingView.modalPresentationStyle = .fullScreen
+        present(onboardingView, animated: true)
+	}
+
     /// Shows today's label and scrolls grid to today if viewing the current year.
     private func updateTodayLabelAndScroll() {
         let calendar = Calendar.current

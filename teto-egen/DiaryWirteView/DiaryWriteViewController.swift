@@ -148,6 +148,16 @@ class DiaryWriteViewController: UIViewController {
         $0.numberOfLines = 0
     }
     
+    // 공유하기 버튼
+    private let shareButton = UIButton(type: .system).then {
+        $0.setTitle("공유하기", for: .normal)
+        $0.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        $0.setTitleColor(.white, for: .normal)
+        $0.backgroundColor = UIColor.systemBlue
+        $0.layer.cornerRadius = 12
+        $0.isHidden = true
+    }
+    
     private let loadingIndicator = UIActivityIndicatorView(style: .large).then {
         $0.color = .white
         $0.hidesWhenStopped = true
@@ -213,7 +223,7 @@ class DiaryWriteViewController: UIViewController {
     
     private func setupUI() {
         // 네비게이션 바 설정
-        setupNavigationBar()
+        updateNavigationBar()
         
         // SnapKit을 사용한 레이아웃 설정
         view.addSubview(dateButton)
@@ -344,14 +354,37 @@ class DiaryWriteViewController: UIViewController {
             make.top.equalTo(egenProgressBar.snp.bottom).offset(8)
             make.left.right.bottom.equalToSuperview()
         }
+        
+        // 공유하기 버튼 설정
+        view.addSubview(shareButton)
+        shareButton.snp.makeConstraints { make in
+            make.top.equalTo(egenChartContainer.snp.bottom).offset(30)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(50)
+            make.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide).offset(-20)
+        }
     }
     
-    private func setupNavigationBar() {
+    private func updateNavigationBar() {
         // 읽기 모드에 따른 네비게이션 바 설정
         if isReadOnlyMode {
-            self.title = "일기 보기"
-            // 읽기 모드에서는 저장 버튼 없음
-            navigationItem.rightBarButtonItem = nil
+            self.title = "일기"
+            // 읽기 모드에서는 삭제 버튼 추가
+            let deleteBarButton = UIBarButtonItem(
+                title: "삭제",
+                style: .plain,
+                target: nil,
+                action: nil
+            )
+            deleteBarButton.tintColor = .systemRed
+            navigationItem.rightBarButtonItem = deleteBarButton
+            
+            // 삭제 버튼 바인딩
+            deleteBarButton.rx.tap
+                .subscribe(onNext: { [weak self] in
+                    self?.showDeleteConfirmationAlert()
+                })
+                .disposed(by: disposeBag)
         } else {
             self.title = "일기 작성"
             // 네비게이션 바 우측에 저장 버튼 추가
@@ -362,6 +395,19 @@ class DiaryWriteViewController: UIViewController {
                 action: nil
             )
             navigationItem.rightBarButtonItem = submitBarButton
+            
+            // 저장 버튼 바인딩
+            submitBarButton.rx.tap
+                .subscribe(onNext: { [weak self] in
+                    guard let self = self,
+                          let text = self.diaryTextView.text,
+                          let title = self.titleTextField.text,
+                          !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                    self.view.endEditing(true)
+                    self.showLoading()
+                    self.viewModel.analyzeDiary(text: text, title: title, date: self.selectedDate)
+                })
+                .disposed(by: disposeBag)
         }
     }
     
@@ -372,23 +418,6 @@ class DiaryWriteViewController: UIViewController {
                 self?.selectedDate = date
             })
             .disposed(by: disposeBag)
-        
-        // 읽기 모드가 아닐 때만 저장 버튼 바인딩
-        if !isReadOnlyMode {
-            // 네비게이션 바 저장 버튼 탭 이벤트 바인딩
-            guard let submitBarButton = navigationItem.rightBarButtonItem else { return }
-            
-            submitBarButton.rx.tap
-                .subscribe(onNext: { [weak self] in
-                    guard let self = self, 
-                          let text = self.diaryTextView.text,
-                          let title = self.titleTextField.text,
-                          !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-                    self.showLoading()
-                    self.viewModel.analyzeDiary(text: text, title: title, date: selectedDate)
-                })
-                .disposed(by: disposeBag)
-        }
         
         viewModel.analysisResult
             .observe(on: MainScheduler.instance)
@@ -410,45 +439,62 @@ class DiaryWriteViewController: UIViewController {
         
         // 읽기 모드가 아닐 때만 텍스트 입력 관련 바인딩
         if !isReadOnlyMode {
-            // 텍스트뷰 변화 감지 및 글자 수 제한 (200자)
-            diaryTextView.rx.text
-                .orEmpty
-                .subscribe(onNext: { [weak self] text in
-                    guard let self = self else { return }
-                    
-                    // 200자 초과 시 자르기
-                    if text.count > 200 {
-                        let index = text.index(text.startIndex, offsetBy: 200)
-                        let trimmedText = String(text[..<index])
-                        self.diaryTextView.text = trimmedText
-                        self.characterCountLabel.text = "200 / 200"
-                    } else {
-                        // 글자 수 표시 업데이트
-                        self.characterCountLabel.text = "\(text.count) / 200"
-                    }
-                    
-                    // 글자 수에 따른 색상 변경 (180자 이상이면 빨간색)
-                    if text.count >= 180 {
-                        self.characterCountLabel.textColor = .red
-                    } else {
-                        self.characterCountLabel.textColor = .gray
-                    }
-                })
-                .disposed(by: disposeBag)
-            
-            // 네비게이션 바 버튼 활성화 조건
-            Observable.combineLatest(
-                titleTextField.rx.text.orEmpty.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
-                diaryTextView.rx.text.orEmpty.map { $0.count > 0 }
-            )
-            .map { titleHasText, contentHasText in
-                return titleHasText && contentHasText
-            }
-            .subscribe(onNext: { [weak self] isValid in
-                self?.navigationItem.rightBarButtonItem?.isEnabled = isValid
+            bindTextInputs()
+        } else {
+            // 읽기 모드에서는 공유 버튼 바인딩
+            bindShareButton()
+        }
+    }
+    
+    private func bindShareButton() {
+        shareButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let self = self, let diary = self.existingDiary else { return }
+                let shareViewController = ShareViewController(shareViewModel: .init(diary))
+                self.present(shareViewController, animated: true)
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func bindTextInputs() {
+        // 텍스트뷰 변화 감지 및 글자 수 제한 (200자)
+        diaryTextView.rx.text
+            .orEmpty
+            .subscribe(onNext: { [weak self] text in
+                guard let self = self else { return }
+                
+                // 200자 초과 시 자르기
+                if text.count > 200 {
+                    let index = text.index(text.startIndex, offsetBy: 200)
+                    let trimmedText = String(text[..<index])
+                    self.diaryTextView.text = trimmedText
+                    self.characterCountLabel.text = "200 / 200"
+                } else {
+                    // 글자 수 표시 업데이트
+                    self.characterCountLabel.text = "\(text.count) / 200"
+                }
+                
+                // 글자 수에 따른 색상 변경 (180자 이상이면 빨간색)
+                if text.count >= 180 {
+                    self.characterCountLabel.textColor = .red
+                } else {
+                    self.characterCountLabel.textColor = .gray
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 네비게이션 바 버튼 활성화 조건
+        Observable.combineLatest(
+            titleTextField.rx.text.orEmpty.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
+            diaryTextView.rx.text.orEmpty.map { $0.count > 0 }
+        )
+        .map { titleHasText, contentHasText in
+            return titleHasText && contentHasText
         }
+        .subscribe(onNext: { [weak self] isValid in
+            self?.navigationItem.rightBarButtonItem?.isEnabled = isValid
+        })
+        .disposed(by: disposeBag)
     }
     
     private func showLoading() {
@@ -499,6 +545,8 @@ class DiaryWriteViewController: UIViewController {
             date: selectedDate
         )
         
+        self.existingDiary = diary
+        
         // UserDefaults에 저장
         DiaryStorage.shared.saveDiary(diary)
         
@@ -510,6 +558,9 @@ class DiaryWriteViewController: UIViewController {
     }
     
     private func switchToReadOnlyMode(title: String, contents: String) {
+        // 읽기 모드로 전환
+        isReadOnlyMode = true
+        
         // 입력 필드 숨기기
         titleTextField.isHidden = true
         diaryTextView.isHidden = true
@@ -527,15 +578,19 @@ class DiaryWriteViewController: UIViewController {
         contentsLabel.text = contents
         contentsLabel.isHidden = false
         
+        // 공유 버튼 표시
+        shareButton.isHidden = false
+        
         // 테토력 차트 제약조건 업데이트 (읽기 모드에서)
         tetoChartContainer.snp.remakeConstraints { make in
             make.top.equalTo(contentsLabel.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(20)
         }
         
-        navigationItem.rightBarButtonItem = nil
+        // 네비게이션 바 업데이트
+        updateNavigationBar()
         
-        self.title = "일기"
+        bindShareButton()
     }
     
     private func showSaveSuccessAlert() {
@@ -572,5 +627,49 @@ class DiaryWriteViewController: UIViewController {
         let titleHasText = !(titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
         let contentHasText = !diaryTextView.text.isEmpty
         navigationItem.rightBarButtonItem?.isEnabled = titleHasText && contentHasText
+    }
+    
+    private func showDeleteConfirmationAlert() {
+        let alert = UIAlertController(
+            title: "일기 삭제",
+            message: "이 일기를 삭제하시겠습니까?\n삭제된 일기는 복구할 수 없습니다.",
+            preferredStyle: .alert
+        )
+        
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+        
+        let deleteAction = UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.deleteDiary()
+        }
+        
+        alert.addAction(cancelAction)
+        alert.addAction(deleteAction)
+        present(alert, animated: true)
+    }
+    
+    private func deleteDiary() {
+        guard let diary = existingDiary else { return }
+        
+        // DiaryStorage에서 일기 삭제
+        DiaryStorage.shared.deleteDiary(diary)
+        
+        // 삭제 성공 알럿 표시 후 뒤로 가기
+        showDeleteSuccessAlert()
+    }
+    
+    private func showDeleteSuccessAlert() {
+        let alert = UIAlertController(
+            title: "삭제 완료",
+            message: "일기가 성공적으로 삭제되었습니다.",
+            preferredStyle: .alert
+        )
+        
+        let okAction = UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            // 홈 화면으로 돌아가기
+            self?.navigationController?.popViewController(animated: true)
+        }
+        
+        alert.addAction(okAction)
+        present(alert, animated: true)
     }
 }

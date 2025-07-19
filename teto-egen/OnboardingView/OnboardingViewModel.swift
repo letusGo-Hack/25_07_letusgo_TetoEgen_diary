@@ -13,6 +13,13 @@ import Foundation
 enum Gender: Int {
     case male = 0
     case female
+    
+    var title: String {
+        switch self {
+        case .female: return "녀"
+        case .male: return "남"
+        }
+    }
 }
 
 class OnboardingViewModel {
