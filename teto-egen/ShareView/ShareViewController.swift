@@ -72,10 +72,20 @@ extension ShareViewController {
         let output = shareViewModel.transform(input: input)
         
         output.dateTitleLabel
-            .drive(onNext: { [weak self] text in
-                if let self = self {
-                    self.shareView.updateDateTitleLabel(text)
-                }
+            .drive(shareView.dateTitleLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        output.emotionLabel
+            .drive(shareView.emotionLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        output.typeLabel
+            .drive(shareView.typeLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        output.imageName
+            .drive(with: self, onNext: { owner, imageName in
+                owner.shareView.updateImage(name: imageName)
             })
             .disposed(by: disposeBag)
     }
