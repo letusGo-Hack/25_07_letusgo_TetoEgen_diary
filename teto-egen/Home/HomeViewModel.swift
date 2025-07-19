@@ -11,17 +11,37 @@ class HomeViewModel {
     private let _diaries = BehaviorRelay<[DiaryModel]>(value: [])
     var diaries: Observable<[DiaryModel]> { _diaries.asObservable() }
 
+    private let disposeBag = DisposeBag()
+    private let _selectedDate = BehaviorRelay<Date?>(value: nil)
+    var selectedDate: Observable<Date?> { _selectedDate.asObservable() }
+
     // 일기 아이템 변환
     var diaryItems: Observable<[DiaryItem]> {
-        diaries.map { diaries in
-            diaries.map { diary in
-                DiaryItem(
-                    date: DateFormatter.displayFormatter.string(from: diary.date),
-                    title: diary.title,
-                    diary: diary
-                )
+        Observable.combineLatest(diaries, _selectedDate) { diaries, selectedDate in
+            if let selectedDate = selectedDate {
+                return diaries.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) }
+                    .map { diary in
+                        DiaryItem(
+                            date: DateFormatter.displayFormatter.string(from: diary.date),
+                            title: diary.title,
+                            diary: diary
+                        )
+                    }
+            } else {
+                return diaries.sorted { $0.date > $1.date }
+                    .map { diary in
+                        DiaryItem(
+                            date: DateFormatter.displayFormatter.string(from: diary.date),
+                            title: diary.title,
+                            diary: diary
+                        )
+                    }
             }
         }
+    }
+
+    func selectDate(_ date: Date?) {
+        _selectedDate.accept(date)
     }
 
     struct DiaryItem {
@@ -31,7 +51,6 @@ class HomeViewModel {
     }
 
     let year: Int
-    private let disposeBag = DisposeBag()
 
     init(year: Int = Calendar.current.component(.year, from: Date())) {
         self.year = year
@@ -50,7 +69,7 @@ class HomeViewModel {
     private func updateGridColors(with diaries: [DiaryModel]) {
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 1 // Sunday
-        
+
         let startDate = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
         let endDate = calendar.date(from: DateComponents(year: year, month: 12, day: 31))!
 
