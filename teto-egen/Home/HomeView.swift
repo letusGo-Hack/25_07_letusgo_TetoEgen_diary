@@ -3,9 +3,17 @@ import SnapKit
 import Then
 
 class HomeView: UIView {
+    public let todayLabel = UILabel().then {
+        $0.font = .systemFont(ofSize: 16, weight: .medium)
+        $0.textColor = .systemGray
+        $0.isHidden = true
+        $0.textAlignment = .left
+        $0.accessibilityIdentifier = "todayLabel"
+    }
+    
     // Year selection button (yearDropdown) added at the top-left of grid area
     public let yearDropdown = UIButton(type: .system).then {
-        $0.setTitle("2025", for: .normal)
+        $0.setTitle("2025년", for: .normal)
         $0.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
         $0.contentHorizontalAlignment = .left
         $0.accessibilityLabel = "연도 선택"
@@ -65,6 +73,7 @@ class HomeView: UIView {
     private func setupUI() {
         backgroundColor = .systemBackground
         addSubview(yearDropdown)           // add yearDropdown to view
+        addSubview(todayLabel)
         addSubview(gridCollectionView)
         addSubview(diaryTableView)
         addSubview(addButton)
@@ -76,8 +85,14 @@ class HomeView: UIView {
             make.width.greaterThanOrEqualTo(60)
         }
         
+        todayLabel.snp.makeConstraints { make in
+            make.top.equalTo(yearDropdown.snp.bottom).offset(4)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.height.equalTo(24)
+        }
+        
         gridCollectionView.snp.makeConstraints { make in
-            make.top.equalTo(yearDropdown.snp.bottom).offset(8)
+            make.top.equalTo(todayLabel.snp.bottom).offset(8)
             make.leading.equalToSuperview()
             make.trailing.equalToSuperview()
             // Calculate cell height dynamically based on gridCollectionView height / 7 rows:
