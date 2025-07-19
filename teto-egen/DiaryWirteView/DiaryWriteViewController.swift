@@ -114,7 +114,7 @@ class DiaryWriteViewController: UIViewController {
     }
     
     private let tetoDescriptionLabel = UILabel().then {
-        $0.font = UIFont.systemFont(ofSize: 12)
+        $0.font = UIFont(name: "Pretendard-Medium", size: 14)
         $0.textColor = .darkGray
         $0.numberOfLines = 0
     }
@@ -126,12 +126,12 @@ class DiaryWriteViewController: UIViewController {
     
     private let egenLabel = UILabel().then {
         $0.text = "에겐력"
-        $0.font = UIFont.boldSystemFont(ofSize: 16)
+        $0.font = UIFont(name: "Pretendard-Bold", size: 16)
         $0.textColor = .black
     }
     
     private let egenScoreLabel = UILabel().then {
-        $0.font = UIFont.systemFont(ofSize: 14)
+        $0.font = UIFont(name: "Pretendard-Medium", size: 14)
         $0.textColor = .gray
         $0.textAlignment = .right
     }
@@ -145,7 +145,7 @@ class DiaryWriteViewController: UIViewController {
     }
     
     private let egenDescriptionLabel = UILabel().then {
-        $0.font = UIFont.systemFont(ofSize: 12)
+        $0.font = UIFont(name: "Pretendard-Medium", size: 14)
         $0.textColor = .darkGray
         $0.numberOfLines = 0
     }
