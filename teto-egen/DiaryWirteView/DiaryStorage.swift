@@ -55,4 +55,24 @@ class DiaryStorage {
             print("일기 삭제 실패: \(error)")
         }
     }
+    
+    func deleteDiary(_ diary: DiaryModel) {
+        var savedDiaries = loadDiaries()
+        
+        // 날짜와 제목으로 일기 찾기 (고유 식별자 역할)
+        if let index = savedDiaries.firstIndex(where: { $0.date == diary.date && $0.title == diary.title }) {
+            savedDiaries.remove(at: index)
+            
+            do {
+                let data = try JSONEncoder().encode(savedDiaries)
+                userDefaults.set(data, forKey: diariesKey)
+                userDefaults.synchronize()
+                print("일기 삭제 성공")
+            } catch {
+                print("일기 삭제 실패: \(error)")
+            }
+        } else {
+            print("삭제할 일기를 찾을 수 없습니다.")
+        }
+    }
 }
