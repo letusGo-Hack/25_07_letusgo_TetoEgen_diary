@@ -12,7 +12,7 @@ import Then
 class OnboardingView: UIView {
     
     private let titleLabel = UILabel().then {
-        $0.text = "Onboarding"
+        $0.text = "사용자 정보 입력"
         $0.font = .systemFont(ofSize: 32, weight: .bold)
     }
     
@@ -20,7 +20,7 @@ class OnboardingView: UIView {
         $0.text = "닉네임을 입력해주세요."
     }
     
-    private let nicknameTextField = UITextField().then {
+    let nicknameTextField = UITextField().then {
         $0.borderStyle = .roundedRect
     }
     
@@ -28,11 +28,11 @@ class OnboardingView: UIView {
         $0.text = "성별을 선택해주세요."
     }
     
-    private let genderSegmentedControl = UISegmentedControl(items: ["남자", "여자"]).then {
+    let genderSegmentedControl = UISegmentedControl(items: ["남자", "여자"]).then {
         $0.selectedSegmentIndex = 0
     }
     
-    private let completeButton = UIButton(type: .system).then {
+    let completeButton = UIButton(type: .system).then {
         $0.backgroundColor = .blue
         $0.setTitle("완료", for: .normal)
         $0.layer.cornerRadius = 20
