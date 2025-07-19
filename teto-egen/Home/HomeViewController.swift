@@ -43,7 +43,7 @@ final class HomeViewController: UIViewController {
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "yyyy년 M월 d일"
         let today = formatter.string(from: Date())
-        title = today
+        title = "나의 일기"
     }
 
     private func configureDelegates() {

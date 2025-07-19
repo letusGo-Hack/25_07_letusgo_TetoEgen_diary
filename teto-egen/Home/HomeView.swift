@@ -4,7 +4,8 @@ import Then
 
 class HomeView: UIView {
     public let todayLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 16, weight: .medium)
+        $0.font = UIFont(name: "Pretendard-Bold", size: 16)
+        $0.text = "나의 일기"
         $0.textColor = .systemGray
         $0.isHidden = true
         $0.textAlignment = .left
@@ -93,7 +94,7 @@ class HomeView: UIView {
         
         gridCollectionView.snp.makeConstraints { make in
             make.top.equalTo(todayLabel.snp.bottom).offset(8)
-            make.leading.equalToSuperview()
+            make.leading.equalToSuperview().inset(16)
             make.trailing.equalToSuperview()
             // Calculate cell height dynamically based on gridCollectionView height / 7 rows:
             // Set height explicitly to cellHeight * 7, cellHeight will be dynamic from width or height, so here set a fixed height for 7 rows
