@@ -33,6 +33,17 @@ class DiaryWriteViewController: UIViewController {
         $0.date = Date()
     }
     
+    private let titleTextField = UITextField().then {
+        $0.placeholder = "일기 제목을 입력하세요"
+        $0.font = UIFont.systemFont(ofSize: 16)
+        $0.borderStyle = .roundedRect
+        $0.backgroundColor = .white
+        $0.layer.borderWidth = 1
+        $0.layer.borderColor = UIColor.lightGray.cgColor
+        $0.layer.cornerRadius = 8
+        $0.clearButtonMode = .whileEditing
+    }
+    
     private let diaryTextView = UITextView().then {
         $0.font = UIFont.systemFont(ofSize: 16)
         $0.textColor = .darkGray
@@ -164,9 +175,16 @@ class DiaryWriteViewController: UIViewController {
             make.centerX.equalToSuperview()
         }
         
+        view.addSubview(titleTextField)
+        titleTextField.snp.makeConstraints { make in
+            make.top.equalTo(datePicker.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(44)
+        }
+        
         view.addSubview(diaryTextView)
         diaryTextView.snp.makeConstraints { make in
-            make.top.equalTo(datePicker.snp.bottom).offset(20)
+            make.top.equalTo(titleTextField.snp.bottom).offset(16)
             make.left.right.equalToSuperview().inset(20)
             make.height.equalTo(200)
         }
@@ -287,7 +305,10 @@ class DiaryWriteViewController: UIViewController {
         
         submitBarButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                guard let self = self, let text = self.diaryTextView.text else { return }
+                guard let self = self, 
+                      let text = self.diaryTextView.text,
+                      let title = self.titleTextField.text,
+                      !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 self.showLoading()
                 self.viewModel.analyzeDiary(text: text)
             })
@@ -328,13 +349,17 @@ class DiaryWriteViewController: UIViewController {
             .disposed(by: disposeBag)
         
         // 네비게이션 바 버튼 활성화 조건
-        diaryTextView.rx.text
-            .orEmpty
-            .map { $0.count > 0 }
-            .subscribe(onNext: { [weak self] hasText in
-                self?.navigationItem.rightBarButtonItem?.isEnabled = hasText
-            })
-            .disposed(by: disposeBag)
+        Observable.combineLatest(
+            titleTextField.rx.text.orEmpty.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
+            diaryTextView.rx.text.orEmpty.map { $0.count > 0 }
+        )
+        .map { titleHasText, contentHasText in
+            return titleHasText && contentHasText
+        }
+        .subscribe(onNext: { [weak self] isValid in
+            self?.navigationItem.rightBarButtonItem?.isEnabled = isValid
+        })
+        .disposed(by: disposeBag)
     }
     
     private func showLoading() {
@@ -349,7 +374,11 @@ class DiaryWriteViewController: UIViewController {
     private func hideLoading() {
         dimBackgroundView.isHidden = true
         loadingIndicator.stopAnimating()
-        navigationItem.rightBarButtonItem?.isEnabled = !diaryTextView.text.isEmpty
+        
+        // 제목과 내용이 모두 있을 때만 버튼 활성화
+        let titleHasText = !(titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        let contentHasText = !diaryTextView.text.isEmpty
+        navigationItem.rightBarButtonItem?.isEnabled = titleHasText && contentHasText
     }
     
     private func updateChartWithAnalysis(_ analysisResult: DiaryScoreModel) {
