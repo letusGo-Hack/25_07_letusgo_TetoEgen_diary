@@ -176,7 +176,7 @@
 				CODE_SIGN_ENTITLEMENTS = "teto-egen/teto_egen.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 92NGUT4BRA;
+				DEVELOPMENT_TEAM = XP44KJ6JB3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "teto-egen/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -189,7 +189,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "kr.brody7.teto-egen";
+				PRODUCT_BUNDLE_IDENTIFIER = "kr.brody7.teto-egen.yoo";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -208,7 +208,7 @@
 				CODE_SIGN_ENTITLEMENTS = "teto-egen/teto_egen.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 92NGUT4BRA;
+				DEVELOPMENT_TEAM = XP44KJ6JB3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "teto-egen/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -221,7 +221,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "kr.brody7.teto-egen";
+				PRODUCT_BUNDLE_IDENTIFIER = "kr.brody7.teto-egen.yoo";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
