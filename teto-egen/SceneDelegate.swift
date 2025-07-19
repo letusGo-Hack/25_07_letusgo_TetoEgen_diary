@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import WidgetKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -28,17 +29,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Called when the scene has moved from an inactive state to an active state.
+        // 앱이 활성화될 때 위젯 새로고침
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
         // Called when the scene will move from an active state to an inactive state.
+        // 앱이 비활성화될 때 위젯 새로고침
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
         // Called as the scene transitions from the background to the foreground.
+        // 앱이 포어그라운드로 전환될 때 위젯 새로고침
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
         // Called as the scene transitions from the foreground to the background.
+        // 앱이 백그라운드로 전환될 때 위젯 새로고침
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

@@ -32,22 +32,29 @@ class WidgetDataLoader {
             return []
         }
     }
-}
-
-// 위젯용 간단한 일기 모델 (메인 앱의 DiaryModel과 호환)
-struct SimpleDiary: Codable {
-    let title: String
-    let contents: String
-    let date: Date
-    let score: SimpleScore
     
-    struct SimpleScore: Codable {
-        let tetoScore: Double
-        let tetoDescription: String
-        let egenScore: Double
-        let egenDescription: String
+    func loadDiaryData() -> [DiaryModel] {
+        guard let data = userDefaults.data(forKey: "SavedDiaries") else { return [] }
+        
+        do {
+            let diaries = try JSONDecoder().decode([DiaryModel].self, from: data)
+            return diaries
+        } catch {
+            print("위젯에서 일기 데이터 로드 실패: \(error)")
+            return []
+        }
+    }
+    
+    func getLastDiaryForDate(_ date: Date) -> DiaryModel? {
+        let calendar = Calendar.current
+        let diaries = loadDiaryData()
+        
+        let sameDayDiaries = diaries.filter { calendar.isDate($0.date, inSameDayAs: date) }
+        return sameDayDiaries.max(by: { $0.date < $1.date })
     }
 }
+
+
 
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
@@ -128,6 +135,23 @@ struct DiaryStreakEntryView : View {
     private var totalEntries: Int {
         return WidgetDataLoader.shared.loadDiaryEntries().count
     }
+    
+    // 점수에 따른 색상 계산
+    private func colorForScores(tetoScore: Double, egenScore: Double) -> Color {
+        // 두 점수의 평균을 구해서 색상 강도 결정
+        let averageScore = (tetoScore + egenScore) / 2.0
+        let intensity = averageScore / 100.0
+        
+        // tetoScore가 더 높으면 파란색 계열, egenScore가 더 높으면 분홍색 계열
+        if tetoScore > egenScore {
+            return Color.blue.opacity(0.5 + intensity * 0.7)
+        } else if egenScore > tetoScore {
+            return Color.pink.opacity(0.5 + intensity * 0.7)
+        } else {
+            // 같으면 보라색 계열
+            return Color.purple.opacity(0.5 + intensity * 0.7)
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -160,10 +184,25 @@ struct DiaryStreakEntryView : View {
                         ForEach(0..<4, id: \.self) { week in
                             HStack(spacing: 4) {
                                 ForEach(0..<7, id: \.self) { day in
-                                    let hasEntry = streakData[week][day]
+                                    let calendar = Calendar.current
+                                    let today = Date()
+                                    // 우측 하단을 오늘로, 좌측 상단을 과거로 배치
+                                    // week 0 = 최근 주, week 3 = 가장 과거 주
+                                    // day 0 = 일요일, day 6 = 토요일
+                                    let daysFromToday = (3 - week) * 7 + (6 - day)
+                                    let targetDate = calendar.date(byAdding: .day, value: -daysFromToday, to: today)!
+                                    let diary = WidgetDataLoader.shared.getLastDiaryForDate(targetDate)
+                                    
+                                    let fillColor: Color = {
+                                        if let diary = diary {
+                                            return colorForScores(tetoScore: diary.score.tetoScore, egenScore: diary.score.egenScore)
+                                        } else {
+                                            return Color.gray.opacity(0.15)
+                                        }
+                                    }()
                                     
                                     RoundedRectangle(cornerRadius: 4)
-                                        .fill(hasEntry ? Color.green.opacity(0.8) : Color.gray.opacity(0.15))
+                                        .fill(fillColor)
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 2)
