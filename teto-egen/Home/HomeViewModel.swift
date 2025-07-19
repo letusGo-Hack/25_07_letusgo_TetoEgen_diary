@@ -4,7 +4,7 @@ import RxCocoa
 
 class HomeViewModel {
     // 7 x 16 그리드를 위한 임의의 색상 배열 (데이터 미구현 상태)
-    let gridColors: [[ColorType]]
+    var gridColors: [[ColorType]] = [[]]
     
     // 일기 리스트
     private let _diaries = BehaviorRelay<[DiaryModel]>(value: [])
@@ -33,8 +33,13 @@ class HomeViewModel {
 
     // 년도 선택 지원을 위해 기본값 올해, 바꿀 수 있음
     let year: Int
+    
     init(year: Int = Calendar.current.component(.year, from: Date())) {
         self.year = year
+        
+        // 저장된 일기 로드
+        loadDiaries()
+        
         var calendar = Calendar.current
         calendar.firstWeekday = 1 // Sunday
 
@@ -103,9 +108,6 @@ class HomeViewModel {
         }
         
         gridColors = tempGridColors
-        
-        // 저장된 일기 로드
-        loadDiaries()
     }
     
     func loadDiaries() {
