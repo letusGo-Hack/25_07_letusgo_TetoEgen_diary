@@ -4,7 +4,7 @@ import RxCocoa
 
 final class HomeViewController: UIViewController {
     // MARK: - Properties
-    private let viewModel = HomeViewModel()
+    private var viewModel = HomeViewModel()
     private let homeView = HomeView()
     private let disposeBag = DisposeBag()
     private var currentDiaryItems: [HomeViewModel.DiaryItem] = []
@@ -30,7 +30,11 @@ final class HomeViewController: UIViewController {
 
     // MARK: - Configuration
     private func configureNavigation() {
-        title = "메인"
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy년 M월 d일"
+        let today = formatter.string(from: Date())
+        title = today
     }
 
     private func configureDelegates() {
@@ -45,6 +49,35 @@ final class HomeViewController: UIViewController {
             .bind { [weak self] in
                 guard let self else { return }
                 self.openDiaryWriteViewController()
+            }
+            .disposed(by: disposeBag)
+        
+        homeView.yearDropdown.rx.tap
+            .bind { [weak self] in
+                guard let self = self else { return }
+                let alert = UIAlertController(title: "연도 선택", message: nil, preferredStyle: .actionSheet)
+                
+                let calendar = Calendar.current
+                let currentYear = calendar.component(.year, from: Date())
+                let years = (currentYear-5...currentYear).reversed()
+                
+                for year in years {
+                    alert.addAction(UIAlertAction(title: "\(year)년", style: .default, handler: { _ in
+                        self.viewModel = HomeViewModel(year: year)
+                        self.homeView.gridCollectionView.reloadData()
+                        self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
+                    }))
+                }
+                
+                alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+                
+                // For iPad support
+                if let popover = alert.popoverPresentationController {
+                    popover.sourceView = self.homeView.yearDropdown
+                    popover.sourceRect = self.homeView.yearDropdown.bounds
+                }
+                
+                self.present(alert, animated: true)
             }
             .disposed(by: disposeBag)
     }
@@ -70,30 +103,42 @@ final class HomeViewController: UIViewController {
 // MARK: - UICollectionViewDataSource
 extension HomeViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        viewModel.gridColors.count
+        1 // 1섹션으로 변경
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        viewModel.gridColors[section].count
+        viewModel.gridColors.count * 7 // 전체 주차 수 * 7
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GridCell", for: indexPath) as? GridCell else {
             fatalError("Failed to dequeue GridCell")
         }
-        let color = viewModel.gridColors[indexPath.section][indexPath.item]
-        cell.configure(color: color)
+        let week = indexPath.item / 7
+        let weekday = indexPath.item % 7
+        let type = viewModel.gridColors[week][weekday]
+        cell.configure(type: type)
         return cell
     }
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
 extension HomeViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let totalSpacing: CGFloat = (15 * 2)
-        let width = (collectionView.bounds.width - totalSpacing) / 16
-        let height: CGFloat = 24
-        return CGSize(width: width, height: height)
+    func collectionView(_ collectionView: UICollectionView,
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // 7행 고정, width는 셀 높이 기준 정사각형으로 설정 (가로 스크롤 가능)
+        let rows: CGFloat = 7
+        let spacing: CGFloat = 6
+        let totalSpacing = spacing * (rows - 1)
+        let cellHeight = (collectionView.bounds.height - totalSpacing) / rows
+        return CGSize(width: cellHeight, height: cellHeight)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView,
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        insetForSectionAt section: Int) -> UIEdgeInsets {
+        UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
     }
 }
 
