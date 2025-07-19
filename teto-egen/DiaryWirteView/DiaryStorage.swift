@@ -9,7 +9,7 @@ import Foundation
 
 class DiaryStorage {
     static let shared = DiaryStorage()
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults = UserDefaults(suiteName: "group.com.teto-egen.diary") ?? UserDefaults.standard
     private let diariesKey = "SavedDiaries"
     
     private init() {}
