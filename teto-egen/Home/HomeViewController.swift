@@ -132,7 +132,9 @@ final class HomeViewController: UIViewController {
 
     private func reloadForSelectedYear(_ year: Int) {
         self.viewModel = HomeViewModel(year: year)
+        self.bindData() // Re-bind to new viewModel's rx properties
         self.homeView.gridCollectionView.reloadData()
+        self.homeView.diaryTableView.reloadData()
         updateTodayLabelAndScroll()
         self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
     }
@@ -302,4 +304,3 @@ extension HomeViewController: UITableViewDelegate {
         return "\(month)월"
     }
 }
-
