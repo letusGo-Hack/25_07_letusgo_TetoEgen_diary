@@ -13,6 +13,7 @@ final class HomeViewController: UIViewController {
     private var currentDiaryItems: [Int: [HomeViewModel.DiaryItem]] = [:] // 월별
     private var currentSectionMonths: [Int] = [] // 정렬된 월
     private var currentGridColors: [[ColorType]] = []
+    private var currentSelectedDate: Date?
 
     // MARK: - Lifecycle
     override func loadView() {
@@ -85,6 +86,13 @@ final class HomeViewController: UIViewController {
             .subscribe(onNext: { [weak self] gridColors in
                 self?.currentGridColors = gridColors
                 self?.homeView.gridCollectionView.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
+        viewModel.selectedDate
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] date in
+                self?.currentSelectedDate = date
             })
             .disposed(by: disposeBag)
     }
@@ -166,6 +174,46 @@ extension HomeViewController: UICollectionViewDelegateFlowLayout {
                         layout collectionViewLayout: UICollectionViewLayout,
                         insetForSectionAt section: Int) -> UIEdgeInsets {
         UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+    }
+}
+
+// MARK: - UICollectionViewDelegate
+extension HomeViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard collectionView == homeView.gridCollectionView else { return }
+        let week = indexPath.item / 7
+        let weekday = indexPath.item % 7
+        
+        let calendar = Calendar.current
+        var calendarWithLocale = calendar
+        calendarWithLocale.locale = Locale(identifier: "ko_KR")
+
+        // Calculate the firstWeekStartDate as in HomeViewModel's updateGridColors
+        var components = DateComponents()
+        components.year = viewModel.year
+        components.month = 1
+        components.day = 1
+        
+        guard let firstDayOfYear = calendarWithLocale.date(from: components) else { return }
+        
+        // Find the weekday for the first day of the year
+        let firstWeekday = calendarWithLocale.component(.weekday, from: firstDayOfYear) // Sunday=1
+        
+        // Calculate start of the first week (Sunday before or on Jan 1)
+        let daysToSubtract = firstWeekday - 1
+        guard let firstWeekStartDate = calendarWithLocale.date(byAdding: .day, value: -daysToSubtract, to: firstDayOfYear) else { return }
+        
+        // Calculate tappedDate = firstWeekStartDate + (week * 7 + weekday) days
+        let daysToAdd = week * 7 + weekday
+        guard let tappedDate = calendarWithLocale.date(byAdding: .day, value: daysToAdd, to: firstWeekStartDate) else { return }
+        
+        // Toggle selection logic
+        if let selectedDate = currentSelectedDate,
+           calendarWithLocale.isDate(selectedDate, inSameDayAs: tappedDate) {
+            viewModel.selectDate(nil) // Show all diaries
+        } else {
+            viewModel.selectDate(tappedDate) // Show filtered list for tappedDate
+        }
     }
 }
 
