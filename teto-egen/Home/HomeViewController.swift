@@ -36,10 +36,15 @@ final class HomeViewController: UIViewController {
         homeView.addButton.rx.tap
             .bind { [weak self] in
                 guard let self else { return }
-                let diaryWriteVC = DiaryWriteViewController()
-                self.navigationController?.pushViewController(diaryWriteVC, animated: true)
+                self.openDiaryWriteViewController()
             }
             .disposed(by: disposeBag)
+    }
+    
+    private func openDiaryWriteViewController() {
+        let diaryWriteVC = DiaryWriteViewController()
+        let navigationController: UINavigationController = .init(rootViewController: diaryWriteVC)
+        present(navigationController, animated: true)
     }
 }
 
