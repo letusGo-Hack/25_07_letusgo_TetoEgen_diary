@@ -23,8 +23,8 @@ enum ShareTypeModel {
     
     var title: String {
         switch self {
-        case .teto: return "🧊테토"
-        case .egen: return "🔥에겐"
+        case .teto: return "테토"
+        case .egen: return "에겐"
         }
     }
 

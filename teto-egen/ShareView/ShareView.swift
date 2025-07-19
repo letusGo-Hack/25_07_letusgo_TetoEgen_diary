@@ -16,24 +16,23 @@ class ShareView: UIView {
         $0.tintColor = .white
     }
 
-    private let dateTitleLabel = UILabel().then {
+    var dateTitleLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 14, weight: .medium)
         $0.textColor = .label
         $0.textAlignment = .center
-        $0.text = "7월 19일의 mun님은"
         $0.textColor = .white
     }
     
-    private let emotionLabel = UILabel().then {
+    var emotionLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 30, weight: .semibold)
-        $0.text = "감정이 요동치는"
+        //$0.text = "감정이 요동치는"
         $0.textAlignment = .center
         $0.textColor = .white
     }
     
-    private let typeLabel = UILabel().then {
+    var typeLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 40, weight: .bold)
-        $0.text = "에겐인"
+        //$0.text = "에겐인"
         $0.textAlignment = .center
         $0.textColor = .white
     }
@@ -134,12 +133,5 @@ extension ShareView {
         ].forEach { $0.isHidden = false }
         
         return image
-    }
-}
-
-extension ShareView {
-    
-    func updateDateTitleLabel(_ text: String) {
-        dateTitleLabel.text = text
     }
 }

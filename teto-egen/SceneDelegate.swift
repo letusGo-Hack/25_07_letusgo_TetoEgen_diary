@@ -16,7 +16,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         
-        let homeViewController = HomeViewController()
+        let homeViewController = ShareViewController(shareViewModel: ShareViewModel(DiaryModel(title: "아아", contents: "아아", score: DiaryScoreModel(tetoScore: 0.777, tetoDescription: "dd", egenScore: 0.1, egenDescription: "aaaa"), date: Date())))
         let navigationController = UINavigationController(rootViewController: homeViewController)
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
