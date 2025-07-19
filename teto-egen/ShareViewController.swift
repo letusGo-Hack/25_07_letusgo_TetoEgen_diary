@@ -14,10 +14,38 @@ class ShareViewController: UIViewController {
     override func loadView() {
         view = shareView
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.isNavigationBarHidden = true
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupButton()
     }
     
+    func setupButton() {
+        shareView.exitButton.addAction(UIAction { [weak self] _ in
+            guard let self = self else { return }
+            self.exitButtonTapped()
+        }, for: .touchUpInside)
+        shareView.shareButton.addAction(UIAction { [weak self] _ in
+            guard let self = self else { return }
+            self.shareButtonTapped()
+        }, for: .touchUpInside)
+    }
 
+}
+
+extension ShareViewController {
+    
+    private func exitButtonTapped() {
+        dismiss(animated: true)
+    }
+    
+    private func shareButtonTapped() {
+        let image = shareView.asImage()
+        let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        present(activityVC, animated: true)
+    }
 }

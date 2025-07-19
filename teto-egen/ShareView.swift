@@ -11,7 +11,7 @@ import SnapKit
 
 class ShareView: UIView {
     
-    private let exitButton = UIButton(type: .system).then {
+    let exitButton = UIButton(type: .system).then {
         $0.setImage(UIImage(systemName: "x.circle.fill"), for: .normal)
         $0.tintColor = .white
     }
@@ -43,7 +43,7 @@ class ShareView: UIView {
         $0.contentMode = .scaleAspectFit
     }
     
-    private let shareButton = UIButton(type: .system).then {
+    let shareButton = UIButton(type: .system).then {
         $0.setTitle("공유하기", for: .normal)
         $0.setTitleColor(.white, for: .normal)
         $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
@@ -112,4 +112,27 @@ class ShareView: UIView {
         }
     }
     
+}
+
+extension ShareView {
+    
+    // 이미지로 변환하는 메서드
+    func asImage() -> UIImage {
+        [
+            exitButton,
+            shareButton
+        ].forEach { $0.isHidden = true }
+        
+        let renderer = UIGraphicsImageRenderer(bounds: bounds)
+        let image =  renderer.image { context in
+            layer.render(in: context.cgContext)
+        }
+        
+        [
+            exitButton,
+            shareButton
+        ].forEach { $0.isHidden = false }
+        
+        return image
+    }
 }
