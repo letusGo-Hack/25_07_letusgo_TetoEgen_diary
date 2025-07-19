@@ -130,88 +130,57 @@ struct DiaryStreakEntryView : View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // 헤더
+        VStack(alignment: .leading, spacing: 4) {
+            Spacer()
             HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("일기 스트릭")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    HStack(spacing: 8) {
-                        Text("\(consecutiveDays)일 연속")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.green)
-                        
-                        Text("총 \(totalEntries)개")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
                 Spacer()
-                
-                // 테토/에겐 표시
-                HStack(spacing: 3) {
-                    Text("테")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 12, height: 12)
-                        .background(Circle().fill(Color.blue))
-                    
-                    Text("에")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 12, height: 12)
-                        .background(Circle().fill(Color.pink))
-                }
-            }
-            
-            // 잔디 그래프
-            VStack(spacing: 2) {
-                ForEach(0..<4, id: \.self) { week in
-                    HStack(spacing: 2) {
-                        ForEach(0..<7, id: \.self) { day in
-                            let hasEntry = streakData[week][day]
+                VStack {
+                    // 헤더
+                    HStack {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("일기 스트릭")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.primary)
                             
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(hasEntry ? Color.green.opacity(0.8) : Color.gray.opacity(0.15))
-                                .frame(width: 11, height: 11)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
-                                )
+                            HStack(spacing: 8) {
+                                Text("\(consecutiveDays)일 연속")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundColor(.green)
+                                
+                                Text("총 \(totalEntries)개")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer()
+                    }
+                    
+                    // 잔디 그래프
+                    VStack(spacing: 4) {
+                        ForEach(0..<4, id: \.self) { week in
+                            HStack(spacing: 4) {
+                                ForEach(0..<7, id: \.self) { day in
+                                    let hasEntry = streakData[week][day]
+                                    
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(hasEntry ? Color.green.opacity(0.8) : Color.gray.opacity(0.15))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                                        )
+                                }
+                            }
                         }
                     }
                 }
-            }
-            
-            // 범례 및 요일 표시
-            HStack {
-                Text("월")
-                    .font(.system(size: 7))
-                    .foregroundColor(.secondary)
-                    .frame(width: 11)
-                
-                Spacer()
-                
-                Text("수")
-                    .font(.system(size: 7))
-                    .foregroundColor(.secondary)
-                    .frame(width: 11)
-                
-                Spacer()
-                
-                Text("금")
-                    .font(.system(size: 7))
-                    .foregroundColor(.secondary)
-                    .frame(width: 11)
+                .padding(4)
                 
                 Spacer()
             }
+            Spacer()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .background(Color.white)
     }
 }
 
@@ -221,8 +190,8 @@ struct DiaryStreak: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
             DiaryStreakEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("일기 스트릭")
         .description("일기 작성 연속 기록을 GitHub 잔디처럼 확인하세요")
         .supportedFamilies([.systemSmall])
@@ -249,3 +218,4 @@ extension ConfigurationAppIntent {
     SimpleEntry(date: .now, configuration: .diary)
     SimpleEntry(date: .now, configuration: .streak)
 }
+
