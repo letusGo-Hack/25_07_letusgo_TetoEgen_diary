@@ -17,20 +17,20 @@ class ShareView: UIView {
     }
 
     var dateTitleLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 14, weight: .medium)
+        $0.font = UIFont(name: "Pretendard-Medium", size: 16)
         $0.textColor = .label
         $0.textAlignment = .center
         $0.textColor = .white
     }
     
     var emotionLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 30, weight: .semibold)
+        $0.font = UIFont(name: "Pretendard-Bold", size: 20)
         $0.textAlignment = .center
         $0.textColor = .white
     }
     
     var typeLabel = UILabel().then {
-        $0.font = .systemFont(ofSize: 40, weight: .bold)
+        $0.font = UIFont(name: "Pretendard-Bold", size: 40)
         $0.textAlignment = .center
         $0.textColor = .white
     }
@@ -40,10 +40,15 @@ class ShareView: UIView {
     }
     
     let shareButton = UIButton(type: .system).then {
-        $0.setTitle("공유하기", for: .normal)
-        $0.setTitleColor(.white, for: .normal)
-        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        $0.layer.cornerRadius = 8
+        let title = "공유하기"
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont(name: "Pretendard-Bold", size: 14),
+            .foregroundColor: UIColor.white
+        ]
+        let attributedTitle = NSAttributedString(string: title, attributes: attributes)
+        
+        $0.setAttributedTitle(attributedTitle, for: .normal)
+        $0.layer.cornerRadius = 15
         $0.backgroundColor = .systemBlue
     }
     
@@ -76,7 +81,7 @@ class ShareView: UIView {
         }
         
         dateTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(safeAreaLayoutGuide.snp.top).offset(20)
+            $0.top.equalTo(exitButton.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
             $0.horizontalEdges.equalToSuperview().inset(10)
         }
@@ -88,7 +93,7 @@ class ShareView: UIView {
         }
         
         typeLabel.snp.makeConstraints {
-            $0.top.equalTo(emotionLabel.snp.bottom).offset(20)
+            $0.top.equalTo(emotionLabel.snp.bottom).offset(10)
             $0.centerX.equalToSuperview()
             $0.horizontalEdges.equalToSuperview().inset(10)
         }
@@ -97,7 +102,7 @@ class ShareView: UIView {
             $0.top.equalTo(typeLabel.snp.bottom).offset(30)
             $0.centerX.equalToSuperview()
             $0.horizontalEdges.equalToSuperview().inset(20)
-            $0.height.equalTo(300)
+            $0.height.equalTo(400)
         }
         
         shareButton.snp.makeConstraints {
