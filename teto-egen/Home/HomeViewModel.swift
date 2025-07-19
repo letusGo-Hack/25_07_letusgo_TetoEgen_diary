@@ -73,14 +73,29 @@ class HomeViewModel {
                 if currentYear != year {
                     weekColors.append(.empty)
                 } else {
-                    let choice = Int.random(in: 0...10)
-                    switch choice {
-                    case 0...3:
+                    // 일기 있는지 확인 후 색상 결정
+                    if let diary = _diaries.value.first(where: { calendar.isDate($0.date, inSameDayAs: currentDate) }) {
+                        let teto = Int(diary.score.tetoScore * 100)
+                        let egen = Int(diary.score.egenScore * 100)
+                        let diff = teto - egen
+                        let absDiff = abs(diff)
+                        let grade: Int
+                        if absDiff <= 33 {
+                            grade = 1
+                        } else if absDiff <= 66 {
+                            grade = 2
+                        } else {
+                            grade = 3
+                        }
+                        if diff > 0 {
+                            weekColors.append(.blue(grade))
+                        } else if diff < 0 {
+                            weekColors.append(.pink(grade))
+                        } else {
+                            weekColors.append(.empty)
+                        }
+                    } else {
                         weekColors.append(.empty)
-                    case 4...6:
-                        weekColors.append(.pink(Int.random(in: 1...3)))
-                    default:
-                        weekColors.append(.blue(Int.random(in: 1...3)))
                     }
                 }
             }
