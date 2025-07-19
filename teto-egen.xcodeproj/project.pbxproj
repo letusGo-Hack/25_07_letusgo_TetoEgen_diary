@@ -306,6 +306,7 @@
 				DEVELOPMENT_TEAM = 92NGUT4BRA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "teto-egen/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "TONE 다이어리";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -338,6 +339,7 @@
 				DEVELOPMENT_TEAM = 92NGUT4BRA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "teto-egen/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "TONE 다이어리";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
