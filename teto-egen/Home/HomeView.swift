@@ -5,7 +5,7 @@ import Then
 class HomeView: UIView {
     // Year selection button (yearDropdown) added at the top-left of grid area
     public let yearDropdown = UIButton(type: .system).then {
-        $0.setTitle("2025", for: .normal)
+        $0.setTitle("2025년", for: .normal)
         $0.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
         $0.contentHorizontalAlignment = .left
         $0.accessibilityLabel = "연도 선택"
