@@ -13,19 +13,22 @@ class OnboardingView: UIView {
     
     private let titleLabel = UILabel().then {
         $0.text = "사용자 정보 입력"
-        $0.font = .systemFont(ofSize: 32, weight: .bold)
+        $0.font = UIFont(name: "Pretendard-Bold", size: 24)
     }
     
     private let nicknameLabel = UILabel().then {
         $0.text = "닉네임을 입력해주세요."
+        $0.font = UIFont(name: "Pretendard-Medium", size: 16)
     }
     
     let nicknameTextField = UITextField().then {
         $0.borderStyle = .roundedRect
+        $0.font = UIFont(name: "Pretendard-Medium", size: 16)
     }
     
     private let genderLabel = UILabel().then {
         $0.text = "성별을 선택해주세요."
+        $0.font = UIFont(name: "Pretendard-Medium", size: 16)
     }
     
     let genderSegmentedControl = UISegmentedControl(items: ["남자", "여자"]).then {
@@ -35,6 +38,7 @@ class OnboardingView: UIView {
     let completeButton = UIButton(type: .system).then {
         $0.backgroundColor = .blue
         $0.setTitle("완료", for: .normal)
+        $0.tintColor = .white
         $0.layer.cornerRadius = 20
         $0.isEnabled = false
     }
@@ -67,7 +71,7 @@ class OnboardingView: UIView {
         }
         
         nicknameLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(20)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(30)
             $0.leading.equalToSuperview().inset(20)
         }
         
