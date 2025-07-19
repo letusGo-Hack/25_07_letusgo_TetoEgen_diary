@@ -24,6 +24,7 @@ final class HomeViewController: UIViewController {
         super.viewDidLoad()
         configureNavigation()
         configureDelegates()
+        updateTodayLabelAndScroll()
         bindActions()
         bindData()
     }
@@ -32,6 +33,7 @@ final class HomeViewController: UIViewController {
         super.viewWillAppear(animated)
         // 화면이 나타날 때마다 일기 데이터 새로고침
         viewModel.loadDiaries()
+        updateTodayLabelAndScroll()
     }
 
     // MARK: - Configuration
@@ -131,7 +133,51 @@ final class HomeViewController: UIViewController {
     private func reloadForSelectedYear(_ year: Int) {
         self.viewModel = HomeViewModel(year: year)
         self.homeView.gridCollectionView.reloadData()
+        updateTodayLabelAndScroll()
         self.homeView.yearDropdown.setTitle("\(year)년", for: .normal)
+    }
+    
+    /// Shows today's label and scrolls grid to today if viewing the current year.
+    private func updateTodayLabelAndScroll() {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        guard viewModel.year == currentYear else {
+            homeView.todayLabel.isHidden = true
+            return
+        }
+
+        // Show today label
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy년 M월 d일"
+        let todayString = formatter.string(from: Date())
+        homeView.todayLabel.text = "오늘: " + todayString
+        homeView.todayLabel.isHidden = false
+
+        // Scroll grid to today
+        let year = currentYear
+        var calendarWithLocale = calendar
+        calendarWithLocale.locale = Locale(identifier: "ko_KR")
+        var components = DateComponents()
+        components.year = year
+        components.month = 1
+        components.day = 1
+        guard let firstDayOfYear = calendarWithLocale.date(from: components) else { return }
+        let firstWeekday = calendarWithLocale.component(.weekday, from: firstDayOfYear) // Sunday=1
+        let daysToSubtract = firstWeekday - 1
+        guard let firstWeekStartDate = calendarWithLocale.date(byAdding: .day, value: -daysToSubtract, to: firstDayOfYear) else { return }
+        let today = Date()
+        let daysSinceFirstWeek = calendarWithLocale.dateComponents([.day], from: firstWeekStartDate, to: today).day ?? 0
+        let itemIndex = daysSinceFirstWeek
+        let week = itemIndex / 7
+        let weekday = itemIndex % 7
+        let indexPath = IndexPath(item: week * 7 + weekday, section: 0)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            let gridCount = self.currentGridColors.count * 7
+            if (week * 7 + weekday) < gridCount && (week >= 0 && weekday >= 0) {
+                self.homeView.gridCollectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+            }
+        }
     }
 }
 
@@ -256,3 +302,4 @@ extension HomeViewController: UITableViewDelegate {
         return "\(month)월"
     }
 }
+
