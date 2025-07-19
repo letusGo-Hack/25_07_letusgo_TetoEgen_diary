@@ -148,6 +148,16 @@ class DiaryWriteViewController: UIViewController {
         $0.numberOfLines = 0
     }
     
+    // 공유하기 버튼
+    private let shareButton = UIButton(type: .system).then {
+        $0.setTitle("공유하기", for: .normal)
+        $0.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        $0.setTitleColor(.white, for: .normal)
+        $0.backgroundColor = UIColor.systemBlue
+        $0.layer.cornerRadius = 12
+        $0.isHidden = true
+    }
+    
     private let loadingIndicator = UIActivityIndicatorView(style: .large).then {
         $0.color = .white
         $0.hidesWhenStopped = true
@@ -344,6 +354,15 @@ class DiaryWriteViewController: UIViewController {
             make.top.equalTo(egenProgressBar.snp.bottom).offset(8)
             make.left.right.bottom.equalToSuperview()
         }
+        
+        // 공유하기 버튼 설정
+        view.addSubview(shareButton)
+        shareButton.snp.makeConstraints { make in
+            make.top.equalTo(egenChartContainer.snp.bottom).offset(30)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(50)
+            make.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide).offset(-20)
+        }
     }
     
     private func updateNavigationBar() {
@@ -421,7 +440,20 @@ class DiaryWriteViewController: UIViewController {
         // 읽기 모드가 아닐 때만 텍스트 입력 관련 바인딩
         if !isReadOnlyMode {
             bindTextInputs()
+        } else {
+            // 읽기 모드에서는 공유 버튼 바인딩
+            bindShareButton()
         }
+    }
+    
+    private func bindShareButton() {
+        shareButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let self = self, let diary = self.existingDiary else { return }
+                let shareViewController = ShareViewController(shareViewModel: .init(diary))
+                self.present(shareViewController, animated: true)
+            })
+            .disposed(by: disposeBag)
     }
     
     private func bindTextInputs() {
@@ -513,6 +545,8 @@ class DiaryWriteViewController: UIViewController {
             date: selectedDate
         )
         
+        self.existingDiary = diary
+        
         // UserDefaults에 저장
         DiaryStorage.shared.saveDiary(diary)
         
@@ -544,6 +578,9 @@ class DiaryWriteViewController: UIViewController {
         contentsLabel.text = contents
         contentsLabel.isHidden = false
         
+        // 공유 버튼 표시
+        shareButton.isHidden = false
+        
         // 테토력 차트 제약조건 업데이트 (읽기 모드에서)
         tetoChartContainer.snp.remakeConstraints { make in
             make.top.equalTo(contentsLabel.snp.bottom).offset(20)
@@ -552,6 +589,8 @@ class DiaryWriteViewController: UIViewController {
         
         // 네비게이션 바 업데이트
         updateNavigationBar()
+        
+        bindShareButton()
     }
     
     private func showSaveSuccessAlert() {
