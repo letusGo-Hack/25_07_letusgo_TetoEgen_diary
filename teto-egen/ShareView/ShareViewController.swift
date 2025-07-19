@@ -82,5 +82,11 @@ extension ShareViewController {
         output.typeLabel
             .drive(shareView.typeLabel.rx.text)
             .disposed(by: disposeBag)
+        
+        output.imageName
+            .drive(with: self, onNext: { owner, imageName in
+                owner.shareView.updateImage(name: imageName)
+            })
+            .disposed(by: disposeBag)
     }
 }

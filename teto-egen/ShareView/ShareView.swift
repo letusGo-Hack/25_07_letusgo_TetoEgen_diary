@@ -25,20 +25,17 @@ class ShareView: UIView {
     
     var emotionLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 30, weight: .semibold)
-        //$0.text = "감정이 요동치는"
         $0.textAlignment = .center
         $0.textColor = .white
     }
     
     var typeLabel = UILabel().then {
         $0.font = .systemFont(ofSize: 40, weight: .bold)
-        //$0.text = "에겐인"
         $0.textAlignment = .center
         $0.textColor = .white
     }
     
-    private let characterImageView = UIImageView().then {
-        $0.image = UIImage(named: "teto1")
+    var characterImageView = UIImageView().then {
         $0.contentMode = .scaleAspectFit
     }
     
@@ -133,5 +130,12 @@ extension ShareView {
         ].forEach { $0.isHidden = false }
         
         return image
+    }
+}
+
+extension ShareView {
+    
+    func updateImage(name: String) {
+        characterImageView.image = UIImage(named: name)
     }
 }

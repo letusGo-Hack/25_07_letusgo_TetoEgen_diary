@@ -12,8 +12,8 @@ enum ShareLevelModel: Int {
 
     init(diff: Int) {
         switch diff {
-        case ..<3: self = .one
-        case 3..<6: self = .two
+        case ..<30: self = .one
+        case 30..<60: self = .two
         default: self = .three
         }
     }

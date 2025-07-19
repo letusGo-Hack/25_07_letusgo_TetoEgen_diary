@@ -38,4 +38,15 @@ enum ShareTypeModel {
         case .egen(.three): return "오늘 하루도 마음이 먼저 반응한"
         }
     }
+    
+    var imageName: String {
+        switch self {
+        case .teto(.one): return "teto1"
+        case .teto(.two): return "teto2"
+        case .teto(.three): return "teto3"
+        case .egen(.one): return "egen1"
+        case .egen(.two): return "egen2"
+        case .egen(.three): return "egen3"
+        }
+    }
 }

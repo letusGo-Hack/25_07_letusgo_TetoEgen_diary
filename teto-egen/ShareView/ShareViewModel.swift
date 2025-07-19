@@ -15,6 +15,7 @@ class ShareViewModel {
     private let dateTitleLabelRelay = BehaviorRelay(value: "")
     private let emotionRelay = BehaviorRelay(value: "")
     private let typeRelay = BehaviorRelay(value: "")
+    private let imageNameRelay = BehaviorRelay(value: "")
     
     private let disposeBag = DisposeBag()
     
@@ -24,6 +25,7 @@ class ShareViewModel {
         let tetoEgenType = ShareTypeModel(from: data.score)
         emotionRelay.accept(tetoEgenType.description)
         typeRelay.accept("\(tetoEgenType.title)\(gender?.title ?? "남")")
+        imageNameRelay.accept(tetoEgenType.imageName)
     }
 
     private func updateDateTitleLabel(date: Date) {
@@ -46,13 +48,15 @@ extension ShareViewModel {
         let dateTitleLabel: Driver<String>
         let emotionLabel: Driver<String>
         let typeLabel: Driver<String>
+        let imageName: Driver<String>
     }
     
     func transform(input: Input) -> Output {
         return Output(
             dateTitleLabel: dateTitleLabelRelay.asDriver(onErrorDriveWith: .empty()),
             emotionLabel: emotionRelay.asDriver(onErrorDriveWith: .empty()),
-            typeLabel: typeRelay.asDriver(onErrorDriveWith: .empty())
+            typeLabel: typeRelay.asDriver(onErrorDriveWith: .empty()),
+            imageName: imageNameRelay.asDriver(onErrorDriveWith: .empty())
         )
     }
 }
